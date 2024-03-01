@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "849585550362",
+    "firebase_url": "https://washup-laundry-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "washup-laundry",
+    "storage_bucket": "washup-laundry.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:849585550362:android:5f590f66686527b9154da3",
+        "android_client_info": {
+          "package_name": "com.example.washuplaundry"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAb7Zc4SjWpL8xpjUSQpXkrkGivYJ6Bdvk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
