@@ -9,42 +9,26 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:padding="48dp"
+        android:paddingVertical="48dp"
+        android:paddingHorizontal="36dp"
         android:background="@color/red">
-
-        <TextView
-            android:id="@+id/t1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="48dp"
-            android:gravity="center"
-            android:text="@string/sales"
-            android:textSize="40sp"
-            android:textColor="@color/white"
-            android:textStyle="bold"/>
 
         <Spinner
             android:id="@+id/spinner"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="64dp"
+            android:paddingHorizontal="10dp"
+            android:layout_marginBottom="20dp"
+            android:background="@drawable/customize_spinner"
             android:theme="@style/spinner"/>
 
         <FrameLayout
             android:id="@+id/fragment_container_dropdown"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <Button
-                android:id="@+id/btnAdd"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:backgroundTint="@color/yellow"
-                android:textStyle="bold"
-                android:textColor="@color/black"
-                android:text="@string/add"
-                android:layout_marginVertical="30dp"
-                android:layout_gravity="bottom|center" />
-
+            android:layout_height="match_parent"
+            android:padding="10dp"
+            android:background="@drawable/rounded_frame_layout"
+            android:layout_marginBottom="40dp">
         </FrameLayout>
 
     </LinearLayout>

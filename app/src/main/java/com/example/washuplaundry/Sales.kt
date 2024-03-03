@@ -32,11 +32,8 @@ class Sales : Fragment() {
 
         spinner = view.findViewById(R.id.spinner)
         fragmentContainer = view.findViewById(R.id.fragment_container_dropdown)
-
-        // Set up Firebase Database
         db = FirebaseDatabase.getInstance().getReference("Services")
 
-        // Fetch data from Firebase
         fetchData()
 
         return view
@@ -45,135 +42,63 @@ class Sales : Fragment() {
     private fun fetchData() {
         listener = db.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val serviceCategories = mutableListOf<DataSnapshot>()
-
-                // Clear previous data
-                serviceCategories.clear()
-
-                // Populate data from Firebase
-                for (categorySnapshot in snapshot.children) {
-                    serviceCategories.add(categorySnapshot)
+                if (snapshot.exists()) {
+                    val categories = snapshot.children.mapNotNull { it.key }
+                    populateSpinner(categories)
+                } else {
+                    Log.e("Sales", "Failed to fetch data from Firebase")
                 }
-
-                // Set up spinner adapter
-                val spinnerAdapter = ArrayAdapter(
-                    requireContext(),
-                    android.R.layout.simple_spinner_item,
-                    serviceCategories.map { it.key }
-                )
-                spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-                spinner.adapter = spinnerAdapter
-
-                // Set up Spinner functionality after populating data
-                setupSpinner(serviceCategories)
             }
 
             override fun onCancelled(error: DatabaseError) {
-                Log.w("Firebase", "Error fetching data: ${error.message}")
+                Log.e("Sales", "Failed to read from database", error.toException())
             }
         })
     }
 
-    private fun setupSpinner(serviceCategories: List<DataSnapshot>) {
+    private fun populateSpinner(categories: List<String>) {
+        val spinnerAdapter = ArrayAdapter(
+            requireContext(),
+            R.layout.spinner_layout,
+            categories
+        )
+        spinnerAdapter.setDropDownViewResource(R.layout.spinner_layout)
+        spinner.adapter = spinnerAdapter
+
         spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                // Handle item selection
-                replaceFragmentWithSubServices(serviceCategories[position])
+                val selectedCategory = categories[position]
+                val fragmentTransaction = requireActivity().supportFragmentManager.beginTransaction()
+
+                when (selectedCategory) {
+                    "Regular" -> handleFragment("regular_service", { RegularService.newInstance() })
+                    "Self Service" -> handleFragment("self_service", { SelfService() })
+                    "Dry Clean" -> handleFragment("dry_clean", { DryCleanService() })
+                    else -> { /* Handle other categories if needed */ }
+                }
+
+                fragmentTransaction.commit()
             }
 
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-                // Do nothing
-            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
     }
 
-    private fun replaceFragmentWithSubServices(categorySnapshot: DataSnapshot) {
-        when (categorySnapshot.key) {
-            "Dry Clean" -> {
-                fetchDryCleanData { dryClean ->
-                    val fragment = DryClean(dryClean.map { it.service })
-                    replaceFragment(fragment)
+    private fun handleFragment(tag: String, createFragment: () -> Fragment) {
+        val fragment = childFragmentManager.findFragmentByTag(tag) ?: createFragment()
+
+        childFragmentManager.beginTransaction()
+            .apply {
+                for (existingFragment in childFragmentManager.fragments) {
+                    if (existingFragment.tag != tag) hide(existingFragment)
+                }
+                if (fragment.isAdded) {
+                    show(fragment)
+                } else {
+                    add(R.id.fragment_container_dropdown, fragment, tag)
                 }
             }
-            "Regular" -> {
-                fetchRegularServicesData {
-//                    val fragment = RegularServices(regularServices.map { it.service })
-                    replaceFragment(RegularServices())
-                }
-            }
-            "Self Service" -> {
-                fetchSelfServiceData { selfService ->
-                    val fragment = SelfService(selfService.map { it.service })
-                    replaceFragment(fragment)
-                }
-            }
-        }
-    }
-
-    private fun fetchRegularServicesData(callback: (List<RegularServiceList>) -> Unit) {
-        val regularServicesRef = FirebaseDatabase.getInstance().getReference("Services").child("Regular")
-        regularServicesRef.addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val regularServices = mutableListOf<RegularServiceList>()
-                for (serviceSnapshot in snapshot.children) {
-                    val serviceName = serviceSnapshot.child("name").getValue(String::class.java) ?: ""
-                    val servicePrice = serviceSnapshot.child("price").getValue(Double::class.java) ?: 0.0
-                    val service = RegularServiceList(ServiceList(serviceName, servicePrice))
-                    regularServices.add(service)
-                }
-                callback(regularServices)
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                Log.e("Firebase", "Error fetching regular services data: ${error.message}")
-            }
-        })
-    }
-
-    private fun fetchDryCleanData(callback: (List<DryCleanList>) -> Unit) {
-        val dryCleanServicesRef = FirebaseDatabase.getInstance().getReference("Services").child("Dry Clean")
-        dryCleanServicesRef.addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val dryClean = mutableListOf<DryCleanList>()
-                for (serviceSnapshot in snapshot.children) {
-                    val serviceName = serviceSnapshot.child("name").getValue(String::class.java) ?: ""
-                    val servicePrice = serviceSnapshot.child("price").getValue(Double::class.java) ?: 0.0
-                    val service = DryCleanList(ServiceList(serviceName, servicePrice))
-                    dryClean.add(service)
-                }
-                callback(dryClean)
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                Log.e("Firebase", "Error fetching dry clean services data: ${error.message}")
-            }
-        })
-    }
-
-    private fun fetchSelfServiceData(callback: (List<SelfServiceList>) -> Unit) {
-        val selfServicesRef = FirebaseDatabase.getInstance().getReference("Services").child("Self Service")
-        selfServicesRef.addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val selfService = mutableListOf<SelfServiceList>()
-                for (serviceSnapshot in snapshot.children) {
-                    val serviceName = serviceSnapshot.child("name").getValue(String::class.java) ?: ""
-                    val servicePrice = serviceSnapshot.child("price").getValue(Double::class.java) ?: 0.0
-                    val service = SelfServiceList(ServiceList(serviceName, servicePrice))
-                    selfService.add(service)
-                }
-                callback(selfService)
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                Log.e("Firebase", "Error fetching self service data: ${error.message}")
-            }
-        })
-    }
-
-    private fun replaceFragment(fragment: Fragment) {
-        val transaction = childFragmentManager.beginTransaction()
-        transaction.replace(R.id.fragment_container_dropdown, fragment)
-        transaction.commit()
+            .commit()
     }
 
     override fun onDestroyView() {

@@ -14,10 +14,8 @@ class MainActivity : AppCompatActivity() {
         installSplashScreen()
         setContentView(R.layout.activity_main)
 
-        // Find the container view for the fragment
         val fragmentContainer = findViewById<FrameLayout>(R.id.fragmentContainer)
 
-        // Begin a transaction to add the sign-in fragment initially
         val fragmentManager = supportFragmentManager
         val fragmentTransaction = fragmentManager.beginTransaction()
         fragmentTransaction.add(

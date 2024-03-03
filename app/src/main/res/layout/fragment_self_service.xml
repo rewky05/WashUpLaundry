@@ -8,5 +8,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/large_text" />
+        android:padding="16dp"
+        android:textColor="@color/black"
+        android:text="To be added." />
 </androidx.core.widget.NestedScrollView>

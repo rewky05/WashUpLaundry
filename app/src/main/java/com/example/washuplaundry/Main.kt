@@ -23,7 +23,7 @@ class Main : Fragment() {
         bottomNavigation.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.navigation_services -> {
-                    replaceFragment(Services())
+                    replaceFragment(Others())
                     true
                 }
 
@@ -51,7 +51,6 @@ class Main : Fragment() {
             }
         }
 
-        // Show the HomeFragment by default
         bottomNavigation.selectedItemId = R.id.navigation_sales
     }
 
