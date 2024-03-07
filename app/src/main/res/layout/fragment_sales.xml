@@ -3,15 +3,49 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".Sales">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:paddingVertical="48dp"
+        android:paddingBottom="48dp"
         android:paddingHorizontal="36dp"
         android:background="@color/red">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginVertical="10dp"
+            android:layout_gravity="center">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnView"
+                android:layout_width="152dp"
+                android:layout_height="65dp"
+                android:backgroundTint="@color/yellow"
+                android:textColor="@color/black"
+                android:layout_marginHorizontal="5dp"
+                android:text="VIEW"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:cornerRadius="5dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCharge"
+                android:layout_width="152dp"
+                android:layout_height="65dp"
+                android:backgroundTint="@color/yellow"
+                android:textColor="@color/black"
+                android:layout_marginHorizontal="5dp"
+                android:text="CHARGE"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:cornerRadius="5dp"/>
+
+        </LinearLayout>
 
         <Spinner
             android:id="@+id/spinner"

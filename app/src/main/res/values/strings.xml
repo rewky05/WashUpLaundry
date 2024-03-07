@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">WashUp Laundry</string>
+    <string name="app_name">Wash Up Laundry</string>
     <string name="signIn">Sign In</string>
     <string name="email_address">Email Address</string>
     <string name="password">Password</string>
