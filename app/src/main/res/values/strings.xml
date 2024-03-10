@@ -34,10 +34,10 @@
     <string name="service_name">Service Name</string>
     <string name="btndecrease">btnDecrease</string>
     <string name="btnincrease">btnIncrease</string>
-    <string name="peste">peste</string>
     <string name="kilo_description">Kilos</string>
     <string name="total_label">Total: ₱</string>
     <string name="price_label">Price: </string>
     <string name="kg">kg</string>
     <string name="kilo">0.0</string>
+    <string name="back_office">Back Office</string>
 </resources>

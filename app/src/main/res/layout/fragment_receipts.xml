@@ -12,16 +12,6 @@
         android:padding="48dp"
         android:background="@color/red">
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="48dp"
-        android:gravity="center"
-        android:text="@string/receipts"
-        android:textSize="40sp"
-        android:textColor="@color/white"
-        android:textStyle="bold"/>
-
     </LinearLayout>
 
 </FrameLayout>

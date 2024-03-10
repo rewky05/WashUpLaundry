@@ -1,9 +1,5 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/navigation_services"
-        android:icon="@drawable/ic_services"
-        android:title="@string/services" />
-    <item
         android:id="@+id/navigation_receipts"
         android:icon="@drawable/ic_receipts"
         android:title="@string/receipts" />
@@ -11,10 +7,6 @@
         android:id="@+id/navigation_sales"
         android:icon="@drawable/ic_sales"
         android:title="@string/sales" />
-    <item
-        android:id="@+id/navigation_office"
-        android:icon="@drawable/ic_office"
-        android:title="@string/office" />
     <item
         android:id="@+id/navigation_settings"
         android:icon="@drawable/ic_settings"

@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.Spinner
 import androidx.fragment.app.Fragment
@@ -22,6 +23,7 @@ class Sales : Fragment() {
     private lateinit var fragmentContainer: FrameLayout
     private lateinit var db: DatabaseReference
     private lateinit var listener: ValueEventListener
+    private lateinit var totalPreview: Button
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -33,6 +35,14 @@ class Sales : Fragment() {
         spinner = view.findViewById(R.id.spinner)
         fragmentContainer = view.findViewById(R.id.fragment_container_dropdown)
         db = FirebaseDatabase.getInstance().getReference("Services")
+
+        totalPreview = view.findViewById(R.id.btnView)
+        totalPreview.setOnClickListener{
+            requireActivity().supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, TotalPreview())
+                .addToBackStack(null)
+                .commit()
+        }
 
         fetchData()
 

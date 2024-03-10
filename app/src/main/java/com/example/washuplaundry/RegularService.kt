@@ -1,10 +1,13 @@
 package com.example.washuplaundry
 
+import android.content.Context
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.LinearLayout
@@ -24,6 +27,9 @@ class RegularService : Fragment() {
     private lateinit var dbRef: DatabaseReference
     private lateinit var serviceListener: ValueEventListener
     private lateinit var servicePriceMap: MutableMap<String, Double>
+    private lateinit var sharedPreferences: SharedPreferences
+    private var total = 0.0
+    private lateinit var addToOrder: Button
 
     companion object {
         fun newInstance(): RegularService {
@@ -40,6 +46,11 @@ class RegularService : Fragment() {
 
         totalTextView = view.findViewById(R.id.total_price)
         servicesContainer = view.findViewById(R.id.services_container)
+        sharedPreferences = requireActivity().getSharedPreferences("order_prefs", Context.MODE_PRIVATE)
+        addToOrder = view.findViewById(R.id.btnAdd)
+        addToOrder.setOnClickListener{
+            addToOrder()
+        }
 
         dbRef = FirebaseDatabase.getInstance().getReference("Services/Regular")
         fetchDataFromFirebase()
@@ -111,7 +122,7 @@ class RegularService : Fragment() {
     }
 
     private fun updateTotalPrice() {
-        var total = 0.0
+        total = 0.0
 
         for (i in 0 until servicesContainer.childCount) {
             val serviceView = servicesContainer.getChildAt(i)
@@ -129,6 +140,27 @@ class RegularService : Fragment() {
         totalTextView.text = getString(R.string.total_label) + " $total"
     }
 
+    private fun addToOrder() {
+        // Get the currently calculated total from your existing function
+        val currentTotal = total // Replace with your function
+
+        // Update total price in SharedPreferences
+        val existingTotalPrice = sharedPreferences.getFloat("totalPrice", 0f)
+        val newTotalPrice = currentTotal + existingTotalPrice
+
+        sharedPreferences.edit()
+            .putFloat("totalPrice", newTotalPrice.toFloat())
+            .apply()
+
+        resetInputs() // Assuming you want to reset inputs for the specific service
+    }
+
+    private fun resetInputs() {
+        val serviceView = layoutInflater.inflate(R.layout.service_item, servicesContainer, false)
+        val kiloInput = serviceView.findViewById<EditText>(R.id.kiloInput)
+        kiloInput.setText("0.0") // Clear the input field
+        // Reset other input fields if you have more
+    }
 
     override fun onDestroyView() {
         super.onDestroyView()
