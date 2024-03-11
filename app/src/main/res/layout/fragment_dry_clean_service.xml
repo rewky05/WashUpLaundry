@@ -10,6 +10,6 @@
         android:layout_height="wrap_content"
         android:padding="16dp"
         android:textColor="@color/black"
-        android:text="To be added." />
+        android:text="Dry clean services to be added." />
 
 </FrameLayout>

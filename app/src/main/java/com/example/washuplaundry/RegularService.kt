@@ -14,6 +14,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
@@ -28,6 +29,7 @@ class RegularService : Fragment() {
     private lateinit var serviceListener: ValueEventListener
     private lateinit var servicePriceMap: MutableMap<String, Double>
     private lateinit var sharedPreferences: SharedPreferences
+    private lateinit var orderViewModel: OrderViewModel
     private var total = 0.0
     private lateinit var addToOrder: Button
 
@@ -44,6 +46,7 @@ class RegularService : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_regular_service, container, false)
 
+        orderViewModel = ViewModelProvider(requireActivity())[OrderViewModel::class.java]
         totalTextView = view.findViewById(R.id.total_price)
         servicesContainer = view.findViewById(R.id.services_container)
         sharedPreferences = requireActivity().getSharedPreferences("order_prefs", Context.MODE_PRIVATE)
@@ -95,7 +98,7 @@ class RegularService : Fragment() {
 
             buttonMinus.setOnClickListener {
                 val currentKilo = kiloInput.text.toString().toDoubleOrNull() ?: 0.0
-                val newKilo = if (currentKilo == 3.0) 0.0 else currentKilo - 0.5  // 3 or 0 logic
+                val newKilo = if (currentKilo == 3.0) 0.0 else currentKilo - 0.5
 
                 if (newKilo >= 0.0) { // Only update if valid
                     kiloInput.setText(newKilo.toString())
@@ -107,7 +110,7 @@ class RegularService : Fragment() {
 
             buttonPlus.setOnClickListener {
                 val currentKilo = kiloInput.text.toString().toDoubleOrNull() ?: 0.0
-                val newKilo = if (currentKilo == 0.0) 3.0 else currentKilo + 0.5 // Start at 3
+                val newKilo = if (currentKilo == 0.0) 3.0 else currentKilo + 0.5
 
                 if (newKilo >= 0.0) {
                     kiloInput.setText(newKilo.toString())
@@ -141,25 +144,35 @@ class RegularService : Fragment() {
     }
 
     private fun addToOrder() {
-        // Get the currently calculated total from your existing function
-        val currentTotal = total // Replace with your function
+        val currentTotal = total
 
-        // Update total price in SharedPreferences
-        val existingTotalPrice = sharedPreferences.getFloat("totalPrice", 0f)
-        val newTotalPrice = currentTotal + existingTotalPrice
+        orderViewModel.updateTotalPrice(currentTotal)
 
-        sharedPreferences.edit()
-            .putFloat("totalPrice", newTotalPrice.toFloat())
-            .apply()
+        for (i in 0 until servicesContainer.childCount) {
+            val serviceView = servicesContainer.getChildAt(i)
 
-        resetInputs() // Assuming you want to reset inputs for the specific service
+            val serviceName = serviceView.findViewById<TextView>(R.id.service_name).text.toString()
+            val price = servicePriceMap[serviceName] ?: 0.0
+            val kiloInput = serviceView.findViewById<EditText>(R.id.kiloInput)
+            val enteredKilo = kiloInput.text.toString().toDoubleOrNull() ?: 0.0
+            val subtotal = enteredKilo * price
+
+            // Add to orderItems only if quantity is not zero
+            if (enteredKilo > 0.0) {
+                val orderItem = OrderData(name = serviceName, price = price, kilo = enteredKilo, subtotal = subtotal)
+                orderViewModel.addOrderItem(orderItem)
+            }
+        }
+        resetInputs()
     }
 
     private fun resetInputs() {
-        val serviceView = layoutInflater.inflate(R.layout.service_item, servicesContainer, false)
-        val kiloInput = serviceView.findViewById<EditText>(R.id.kiloInput)
-        kiloInput.setText("0.0") // Clear the input field
-        // Reset other input fields if you have more
+        for (i in 0 until servicesContainer.childCount) {
+            val serviceView = servicesContainer.getChildAt(i)
+            val kiloInput = serviceView.findViewById<EditText>(R.id.kiloInput)
+            kiloInput.setText("0.0")
+            totalTextView.text = getString(R.string.total_label)
+        }
     }
 
     override fun onDestroyView() {

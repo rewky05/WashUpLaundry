@@ -4,10 +4,12 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import androidx.fragment.app.Fragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class Main : Fragment() {
+    private var currentFragmentTag: String? = null
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -42,6 +44,17 @@ class Main : Fragment() {
         }
 
         bottomNavigation.selectedItemId = R.id.navigation_sales
+
+        requireActivity().findViewById<ImageButton>(R.id.backButton).setOnClickListener {
+            if (currentFragmentTag != null) {
+                val handled = parentFragmentManager.popBackStackImmediate(currentFragmentTag, 0)
+                if (!handled) {
+                    parentFragmentManager.popBackStack()
+                }
+            } else {
+                parentFragmentManager.popBackStack()
+            }
+        }
     }
 
     private fun replaceFragment(fragment: Fragment) {
