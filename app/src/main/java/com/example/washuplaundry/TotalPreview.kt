@@ -19,6 +19,7 @@ class TotalPreview : Fragment() {
 
     private lateinit var sharedPreferences: SharedPreferences
     private lateinit var orderViewModel: OrderViewModel
+    private lateinit var adapter: OrderDataAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,20 +56,23 @@ class TotalPreview : Fragment() {
         }
 
         val totalPriceTextView = view.findViewById<TextView>(R.id.total_price)
-        totalPriceTextView.text = "Total Price: $totalPrice"
+        totalPriceTextView.text = "Total: ₱$totalPrice"
 
         val orderItemsList = view.findViewById<RecyclerView>(R.id.order_items_list)
         orderItemsList.layoutManager = LinearLayoutManager(context)
 
         // ViewModel Observers
-        orderViewModel.totalPrice.observe(viewLifecycleOwner) { totalPrice ->
-            totalPriceTextView.text = "Total Price: $totalPrice"
-        }
+        orderViewModel = ViewModelProvider(requireActivity())[OrderViewModel::class.java]
+        adapter = OrderDataAdapter(emptyList()) // Initialize with an empty list
+        orderItemsList.adapter = adapter
 
         orderViewModel.orderItems.observe(viewLifecycleOwner) { orderItems ->
-            if (orderItems != null) {
-                orderItemsList.adapter = OrderDataAdapter(orderItems)
-            }
+            adapter.orderItems = orderItems  // Update the adapter's data
+            adapter.notifyDataSetChanged()
+        }
+
+        orderViewModel.totalPrice.observe(viewLifecycleOwner) { totalPrice ->
+            totalPriceTextView.text = "Total: ₱${totalPrice}"
         }
 
         return view

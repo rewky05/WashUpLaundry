@@ -144,9 +144,9 @@ class RegularService : Fragment() {
     }
 
     private fun addToOrder() {
-        val currentTotal = total
+        var currentTotal = 0.0
 
-        orderViewModel.updateTotalPrice(currentTotal)
+        orderViewModel.addNewOrder(currentTotal)
 
         for (i in 0 until servicesContainer.childCount) {
             val serviceView = servicesContainer.getChildAt(i)
@@ -155,14 +155,28 @@ class RegularService : Fragment() {
             val price = servicePriceMap[serviceName] ?: 0.0
             val kiloInput = serviceView.findViewById<EditText>(R.id.kiloInput)
             val enteredKilo = kiloInput.text.toString().toDoubleOrNull() ?: 0.0
-            val subtotal = enteredKilo * price
 
             // Add to orderItems only if quantity is not zero
             if (enteredKilo > 0.0) {
-                val orderItem = OrderData(name = serviceName, price = price, kilo = enteredKilo, subtotal = subtotal)
-                orderViewModel.addOrderItem(orderItem)
+                val subtotal = enteredKilo * price
+                val existingItem = orderViewModel.orderItems.value?.find { it.name == serviceName }
+
+                if (existingItem != null) {
+                    // Update existing item
+                    existingItem.quantity++
+                    existingItem.kilo += enteredKilo
+                    // Recalculate subtotal if needed (if price might have changed)
+                    existingItem.subtotal = existingItem.kilo * existingItem.price
+                } else {
+                    // Create a new item
+                    val orderItem = OrderData(name = serviceName, price = price, kilo = enteredKilo, subtotal = subtotal)
+                    orderViewModel.addOrderItem(orderItem)
+                }
+
+                currentTotal += subtotal
             }
         }
+        orderViewModel.addNewOrder(currentTotal)
         resetInputs()
     }
 

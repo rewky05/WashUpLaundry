@@ -7,7 +7,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
-class OrderDataAdapter(private val orderItems: List<OrderData>) :
+class OrderDataAdapter(var orderItems: List<OrderData>) :
         RecyclerView.Adapter<OrderDataAdapter.OrderDataViewHolder>() {
 
         class OrderDataViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -26,9 +26,9 @@ class OrderDataAdapter(private val orderItems: List<OrderData>) :
         override fun onBindViewHolder(holder: OrderDataViewHolder, position: Int) {
                 val orderItem = orderItems[position]
                 holder.name.text = orderItem.name
-                holder.price.text = "Price: " + String.format("%.2f", orderItem.price)
-                holder.kilo.text = "Kilo: " + String.format("%.2f", orderItem.kilo)
-                holder.subTotal.text = "= " + String.format("%.2f", orderItem.subtotal)
+                holder.price.text = "₱" + String.format("%.2f", orderItem.price)
+                holder.kilo.text = String.format("%.2f", orderItem.kilo) + " kg"
+                holder.subTotal.text = "₱" + String.format("%.2f", orderItem.subtotal)
         }
 
         override fun getItemCount(): Int {
