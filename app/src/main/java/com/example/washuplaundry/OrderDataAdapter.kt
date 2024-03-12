@@ -19,7 +19,7 @@ class OrderDataAdapter(private val orderItems: List<OrderData>) :
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): OrderDataViewHolder {
                 val layoutInflater = LayoutInflater.from(parent.context)
-                val view = layoutInflater.inflate(R.layout.fragment_total_preview_data, parent, false) // Inflate the correct layout
+                val view = layoutInflater.inflate(R.layout.fragment_total_preview_data, parent, false)
                 return OrderDataViewHolder(view)
         }
 
@@ -32,7 +32,7 @@ class OrderDataAdapter(private val orderItems: List<OrderData>) :
         }
 
         override fun getItemCount(): Int {
-                Log.d("OrderItems Size", "Size of orderItems: ${orderItems.size}") // Add logging here
+                Log.d("OrderItems Size", "Size of orderItems: ${orderItems.size}")
                 return orderItems.size
         }
 
