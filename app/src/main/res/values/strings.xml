@@ -35,7 +35,7 @@
     <string name="btndecrease">btnDecrease</string>
     <string name="btnincrease">btnIncrease</string>
     <string name="kilo_description">Kilos</string>
-    <string name="total_label">Total: ₱</string>
+    <string name="total_label">Total: ₱0.0</string>
     <string name="price_label">Price: </string>
     <string name="kg">kg</string>
     <string name="kilo">0.0</string>

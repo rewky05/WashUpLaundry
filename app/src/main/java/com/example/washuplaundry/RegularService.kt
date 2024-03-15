@@ -104,7 +104,7 @@ class RegularService : Fragment() {
                     kiloInput.setText(newKilo.toString())
                     updateTotalPrice()
                 } else {
-                    Toast.makeText(context, "Invalid input: Please enter decimal numbers only", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Invalid Input: Please enter decimal numbers only", Toast.LENGTH_SHORT).show()
                 }
             }
 
@@ -140,7 +140,7 @@ class RegularService : Fragment() {
             total += subtotal
         }
 
-        totalTextView.text = getString(R.string.total_label) + " $total"
+        totalTextView.text = "Total: ₱$total"
     }
 
     private fun addToOrder() {
@@ -163,13 +163,12 @@ class RegularService : Fragment() {
 
                 if (existingItem != null) {
                     // Update existing item
-                    existingItem.quantity++
                     existingItem.kilo += enteredKilo
                     // Recalculate subtotal if needed (if price might have changed)
                     existingItem.subtotal = existingItem.kilo * existingItem.price
                 } else {
                     // Create a new item
-                    val orderItem = OrderData(name = serviceName, price = price, kilo = enteredKilo, subtotal = subtotal)
+                    val orderItem = OrderData(name = serviceName, price = price, kilo = enteredKilo, subtotal = subtotal, totalPrice = orderViewModel.totalPrice.value ?: 0.0) // Include totalPrice
                     orderViewModel.addOrderItem(orderItem)
                 }
 

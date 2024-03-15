@@ -11,16 +11,21 @@ class OrderViewModel : ViewModel() {
 
     val totalPrice: LiveData<Double> = prices.map { it.sum() }
 
-    private val _orderItems = MutableLiveData<MutableList<OrderData>>(mutableListOf())
-    val orderItems: LiveData<MutableList<OrderData>> = _orderItems
+    val _orderItems = MutableLiveData<List<OrderData>>(emptyList())
+    val orderItems: LiveData<List<OrderData>> = _orderItems
 
     // Update total price by adding a new price
-    fun addNewOrder(newPrice: Double) {
-        _prices.value = _prices.value?.plus(newPrice) ?: listOf(newPrice)
+//    fun addNewOrder(newPrice: Double) {
+//        _prices.value = _prices.value?.plus(newPrice) ?: listOf(newPrice)
+//    }
+
+    fun addNewOrder(newPrice: Double = 0.0) { // Add default value 0.0
+        _prices.value = listOf(newPrice) // Reset and set initial price if needed
     }
 
     fun addOrderItem(orderItem: OrderData) {
-        _orderItems.value?.add(orderItem)
-        _orderItems.value = _orderItems.value
+        val currentList = _orderItems.value?.toMutableList() ?: mutableListOf()
+        currentList.add(orderItem)
+        _orderItems.value = currentList
     }
 }
