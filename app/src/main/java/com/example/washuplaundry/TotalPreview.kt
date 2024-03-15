@@ -21,6 +21,10 @@ import com.google.firebase.database.Transaction
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import com.google.gson.Gson
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.concurrent.atomic.AtomicLong
 
 class TotalPreview : Fragment() {
 
@@ -31,6 +35,7 @@ class TotalPreview : Fragment() {
     // Firebase References
     private val joNumberRef = Firebase.database.getReference("currentJONumber")
     private val databaseRef = Firebase.database.getReference("Receipts/Unpaid")
+    private val dailyOrderCounter = AtomicLong(0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,7 +50,7 @@ class TotalPreview : Fragment() {
         val view = inflater.inflate(R.layout.fragment_total_preview, container, false)
 
         totalPriceTextView = view.findViewById(R.id.total_price)
-        val totalPrice = arguments?.getDouble("totalPrice") ?: 0.0
+//        val totalPrice = arguments?.getDouble("totalPrice") ?: 0.0
 
         val orderItemsJson = arguments?.getString("orderItems")
         if (orderItemsJson != null) {
@@ -65,8 +70,8 @@ class TotalPreview : Fragment() {
                 }
         }
 
-        val totalPriceTextView = view.findViewById<TextView>(R.id.total_price)
-        totalPriceTextView.text = "Total: ₱$totalPrice"
+//        val totalPriceTextView = view.findViewById<TextView>(R.id.total_price)
+//        totalPriceTextView.text = "Total: ₱$totalPrice"
 
         val orderItemsList = view.findViewById<RecyclerView>(R.id.order_items_list)
         orderItemsList.layoutManager = LinearLayoutManager(context)
@@ -82,8 +87,7 @@ class TotalPreview : Fragment() {
         }
 
         orderViewModel.totalPrice.observe(viewLifecycleOwner) { totalPrice ->
-            totalPriceTextView.text = "Total: ₱${totalPrice}"
-            updateTotalPriceDisplay()
+            totalPriceTextView.text = "Total: ₱$totalPrice"
         }
 
         val btnCharge = view.findViewById<Button>(R.id.btnCharge)
@@ -109,8 +113,8 @@ class TotalPreview : Fragment() {
                         ) {
                             if (committed) {
                                 val newJONumber = snapshot?.getValue(Int::class.java) ?: 80
-
                                 val totalPrice = extractedOrderData.sumOf { it.subtotal }
+                                Log.d("Logging newJONumber and totalPrice", "$newJONumber, $totalPrice")
                                 fetchUserName(userId) { userName ->
                                     saveOrderDataToRealtime(
                                         extractedOrderData,
@@ -123,6 +127,8 @@ class TotalPreview : Fragment() {
                                 orderViewModel._orderItems.value = emptyList()
                                 orderViewModel.addNewOrder()
                                 Log.d("Receipt saved", "Receipt saved!!!")
+//                                orderViewModel.resetTotalPrice()
+                                totalPriceTextView.text = "Total: ₱0.0"
                             } else {
 
                             }
@@ -131,7 +137,6 @@ class TotalPreview : Fragment() {
                 }
             }
         }
-
         return view
     }
 
@@ -146,13 +151,12 @@ class TotalPreview : Fragment() {
                     recyclerView.getChildViewHolder(recyclerView.getChildAt(index)) as OrderDataAdapter.OrderDataViewHolder
                 val name = holder.name.text.toString()
                 val price = holder.price.text.toString().removePrefix("₱").toDouble()
-                val weightString = holder.kilo.text.toString() // Assuming this contains "3.00 kg"
+                val weightString = holder.kilo.text.toString()
                 val numericalWeightString = weightString.substring(0, weightString.indexOf(" kg"))
                 val weight = numericalWeightString.toDouble()
                 val subTotal = holder.subTotal.text.toString().removePrefix("₱").toDouble()
-                val totalPrice = orderViewModel.totalPrice.value ?: 0.0
 
-                extractedOrderData.add(OrderData(name, price, weight, subTotal, totalPrice))
+                extractedOrderData.add(OrderData(name, price, weight, subTotal))
             }
         } else {
             // RecyclerView not found
@@ -161,16 +165,11 @@ class TotalPreview : Fragment() {
         return extractedOrderData
     }
 
-    private fun updateTotalPriceDisplay() {
-        val totalPrice = orderViewModel.totalPrice.value ?: 0.0
-        totalPriceTextView.text = "Total: ₱$totalPrice"
-    }
-
     private fun fetchUserName(userId: String, callback: (userName: String) -> Unit) {
         FirebaseDatabase.getInstance().getReference("Users").child(userId).child("userName")
             .get()
             .addOnSuccessListener { dataSnapshot ->
-                val userName = dataSnapshot.getValue(String::class.java) ?: "" // Handle potential null
+                val userName = dataSnapshot.getValue(String::class.java) ?: ""
                 callback(userName)
             }
             .addOnFailureListener {
@@ -184,7 +183,7 @@ class TotalPreview : Fragment() {
             .addOnSuccessListener { dataSnapshot ->
                 val userName = dataSnapshot.getValue(String::class.java)
                 if (userName != null) {
-                    callback(userName, userId) // Call the callback to initiate saving
+                    callback(userName, userId)
                 }
             }
     }
@@ -197,25 +196,7 @@ class TotalPreview : Fragment() {
     ) {
         Log.d("Saving Order", "Saving order data to Firebase")
         val userId = FirebaseAuth.getInstance().currentUser?.uid
-        if (userId != null) {
-            val databaseRef = databaseRef.child("JO-$newJONumber") // Keep the JO reference
-
-            // Convert the orderData to a suitable format for Realtime Database
-            val orderDataMap = orderData.map { it.toDatabaseMap(userId, userName) }
-            databaseRef.child("totalPrice").setValue(totalPrice) // Add the totalPrice
-
-            // Firebase update: No changes needed here
-            databaseRef.setValue(orderDataMap)
-                .addOnSuccessListener {
-                    Log.d("Receipt saved", "Receipt saved!!!") // Adjust log message if needed
-                }
-                .addOnFailureListener { exception ->
-                    Log.e("Firebase Save Error", "Error saving data", exception)
-                }
-        }
-        val orderMap = mutableMapOf<String, Any?>(
-            "totalPrice" to totalPrice
-        )
+        val orderMap = mutableMapOf<String, Any?>()
 
         for ((index, item) in orderData.withIndex()) {
             val itemMap = item.toDatabaseMap(userId!!, userName)
@@ -229,7 +210,34 @@ class TotalPreview : Fragment() {
             )
         }
 
-        databaseRef.child("JO-$newJONumber").setValue(orderMap)
+        Log.d("totalPrice", "$totalPrice")
+
+        if (userId != null) {
+            val orderPrefix = dailyOrderCounter.getAndIncrement().toString().padStart(4, '0')
+            val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+            val currentTime = SimpleDateFormat("HH:mm:ss:SSS", Locale.getDefault()).format(Date())
+            val pathTotal = totalPrice.toString()
+            val pathTotalFinal = pathTotal.substring(0, pathTotal.indexOf("."))
+            val databaseRef = databaseRef.child(currentDate).child("JO-$newJONumber").child("$orderPrefix-$currentTime").child("TotalPrice-$pathTotalFinal")
+
+            val orderDataMap = orderData.map { it.toDatabaseMap(userId, userName) }
+//            val totalPrice = orderViewModel.totalPrice.value ?: 0.0
+//            databaseRef.child("totalPrice").setValue(totalPrice)
+            Log.d("totalPrice", "$totalPrice")
+
+            databaseRef.setValue(orderDataMap)
+                .addOnSuccessListener {
+                    Log.d("Receipt saved", "Receipt saved!!!")
+                }
+                .addOnFailureListener { exception ->
+                    Log.e("Firebase Save Error", "Error saving data", exception)
+                }
+        }
+
+//        orderMap["totalPrice"] = totalPrice
+//        databaseRef.child("totalPrice").setValue(totalPrice)
+        Log.d("totalPrice", "$totalPrice")
+
     }
 
     private fun OrderData.toDatabaseMap(userId: String, userName: String): Map<String, Any?> {
@@ -238,7 +246,6 @@ class TotalPreview : Fragment() {
             "price" to price,
             "kilo" to kilo,
             "subtotal" to subtotal,
-            "totalPrice" to totalPrice,
             "userName" to userName,
             "userId" to userId
         )

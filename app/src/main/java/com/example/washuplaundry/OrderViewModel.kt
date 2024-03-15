@@ -3,29 +3,29 @@ package com.example.washuplaundry
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.map
 
 class OrderViewModel : ViewModel() {
     private val _prices = MutableLiveData<List<Double>>(emptyList())
     private val prices: LiveData<List<Double>> = _prices
 
-    val totalPrice: LiveData<Double> = prices.map { it.sum() }
+    private val _totalPrice = MutableLiveData<Double>(0.0) // Initialize with a default value
+    val totalPrice: LiveData<Double> = _totalPrice
 
     val _orderItems = MutableLiveData<List<OrderData>>(emptyList())
     val orderItems: LiveData<List<OrderData>> = _orderItems
 
-    // Update total price by adding a new price
-//    fun addNewOrder(newPrice: Double) {
-//        _prices.value = _prices.value?.plus(newPrice) ?: listOf(newPrice)
-//    }
-
-    fun addNewOrder(newPrice: Double = 0.0) { // Add default value 0.0
-        _prices.value = listOf(newPrice) // Reset and set initial price if needed
+    fun addNewOrder() {
+        val updatedTotalPrice = _orderItems.value?.sumOf { it.subtotal } ?: 0.0
+        _totalPrice.postValue(updatedTotalPrice)
     }
 
     fun addOrderItem(orderItem: OrderData) {
         val currentList = _orderItems.value?.toMutableList() ?: mutableListOf()
         currentList.add(orderItem)
         _orderItems.value = currentList
+    }
+
+    fun resetTotalPrice() {
+        _totalPrice.postValue(0.0)
     }
 }

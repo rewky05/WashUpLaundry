@@ -8,7 +8,6 @@ data class OrderData(
     val price: Double,
     var kilo: Double,
     var subtotal: Double,
-    var totalPrice: Double,
     val userName: String = "",
     val userId: String = ""
 )
