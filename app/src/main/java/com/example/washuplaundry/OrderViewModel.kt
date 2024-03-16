@@ -3,10 +3,13 @@ package com.example.washuplaundry
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import java.util.concurrent.atomic.AtomicInteger
 
 class OrderViewModel : ViewModel() {
     private val _prices = MutableLiveData<List<Double>>(emptyList())
     private val prices: LiveData<List<Double>> = _prices
+
+    private val dailyOrderCounter = AtomicInteger(0)
 
     private val _totalPrice = MutableLiveData<Double>(0.0) // Initialize with a default value
     val totalPrice: LiveData<Double> = _totalPrice
@@ -25,7 +28,7 @@ class OrderViewModel : ViewModel() {
         _orderItems.value = currentList
     }
 
-    fun resetTotalPrice() {
-        _totalPrice.postValue(0.0)
-    }
+//    fun resetTotalPrice() {
+//        _totalPrice.postValue(0.0)
+//    }
 }

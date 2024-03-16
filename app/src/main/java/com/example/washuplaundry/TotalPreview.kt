@@ -24,7 +24,6 @@ import com.google.gson.Gson
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import java.util.concurrent.atomic.AtomicLong
 
 class TotalPreview : Fragment() {
 
@@ -35,7 +34,6 @@ class TotalPreview : Fragment() {
     // Firebase References
     private val joNumberRef = Firebase.database.getReference("currentJONumber")
     private val databaseRef = Firebase.database.getReference("Receipts/Unpaid")
-    private val dailyOrderCounter = AtomicLong(0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,7 +48,6 @@ class TotalPreview : Fragment() {
         val view = inflater.inflate(R.layout.fragment_total_preview, container, false)
 
         totalPriceTextView = view.findViewById(R.id.total_price)
-//        val totalPrice = arguments?.getDouble("totalPrice") ?: 0.0
 
         val orderItemsJson = arguments?.getString("orderItems")
         if (orderItemsJson != null) {
@@ -69,9 +66,6 @@ class TotalPreview : Fragment() {
                     // No order items
                 }
         }
-
-//        val totalPriceTextView = view.findViewById<TextView>(R.id.total_price)
-//        totalPriceTextView.text = "Total: ₱$totalPrice"
 
         val orderItemsList = view.findViewById<RecyclerView>(R.id.order_items_list)
         orderItemsList.layoutManager = LinearLayoutManager(context)
@@ -213,19 +207,18 @@ class TotalPreview : Fragment() {
         Log.d("totalPrice", "$totalPrice")
 
         if (userId != null) {
-            val orderPrefix = dailyOrderCounter.getAndIncrement().toString().padStart(4, '0')
             val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-            val currentTime = SimpleDateFormat("HH:mm:ss:SSS", Locale.getDefault()).format(Date())
+            val currentTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
             val pathTotal = totalPrice.toString()
             val pathTotalFinal = pathTotal.substring(0, pathTotal.indexOf("."))
-            val databaseRef = databaseRef.child(currentDate).child("JO-$newJONumber").child("$orderPrefix-$currentTime").child("TotalPrice-$pathTotalFinal")
+            val databaseRef = databaseRef.child(currentDate).child("JO-$newJONumber")
 
-            val orderDataMap = orderData.map { it.toDatabaseMap(userId, userName) }
-//            val totalPrice = orderViewModel.totalPrice.value ?: 0.0
-//            databaseRef.child("totalPrice").setValue(totalPrice)
-            Log.d("totalPrice", "$totalPrice")
+            val data = mapOf(
+                "timestamp" to currentTime,
+                "totalPrice-$pathTotalFinal" to orderData.map { it.toDatabaseMap(userId, userName) }
+            )
 
-            databaseRef.setValue(orderDataMap)
+            databaseRef.setValue(data)
                 .addOnSuccessListener {
                     Log.d("Receipt saved", "Receipt saved!!!")
                 }
@@ -234,8 +227,7 @@ class TotalPreview : Fragment() {
                 }
         }
 
-//        orderMap["totalPrice"] = totalPrice
-//        databaseRef.child("totalPrice").setValue(totalPrice)
+
         Log.d("totalPrice", "$totalPrice")
 
     }

@@ -1,59 +1,127 @@
 package com.example.washuplaundry
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
+import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
+import java.math.BigDecimal
+import java.text.SimpleDateFormat
+import java.util.*
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
-
-/**
- * A simple [Fragment] subclass.
- * Use the [Receipts.newInstance] factory method to
- * create an instance of this fragment.
- */
 class Receipts : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
-    }
+    private lateinit var receiptRecyclerView: RecyclerView
+    private lateinit var current_date: TextView
+    private lateinit var currentDate: Calendar
+    private val database = FirebaseDatabase.getInstance().reference
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_receipts, container, false)
+        val view = inflater.inflate(R.layout.fragment_receipts, container, false)
+
+        receiptRecyclerView = view.findViewById(R.id.receipt_recycler_view)
+        current_date = view.findViewById(R.id.current_date)
+        currentDate = Calendar.getInstance()
+
+        fetchDataFromFirebase()
+
+        return view
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment Dashboard.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            Receipts().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
+    private fun fetchDataFromFirebase() {
+        val receiptRef = database.child("Receipts/Unpaid")
+
+        receiptRef.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val receiptData = processAndPrepareData(snapshot)
+
+                receiptRecyclerView.layoutManager = LinearLayoutManager(context)
+                receiptRecyclerView.adapter = ReceiptAdapter(receiptData)
+
+                currentDate = Calendar.getInstance()
+                current_date.text = SimpleDateFormat("yyyy-MM-dd").format(currentDate.time)
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.e("Firebase Error", "Error fetching data", error.toException())
+            }
+        })
+    }
+
+    private fun processAndPrepareData(snapshot: DataSnapshot): List<ReceiptDataRow> {
+        val adapterData = mutableListOf<ReceiptDataRow>()
+
+        for (dateSnapshot in snapshot.children) {
+            val dateString = dateSnapshot.key ?: continue
+
+            val receiptDate = SimpleDateFormat("yyyy-MM-dd").parse(dateString)
+            if (receiptDate != null && isSameDate(currentDate.time, receiptDate)) {
+
+                for (joDataSnapshot in dateSnapshot.children) {
+                    val joNumber = joDataSnapshot.key ?: continue
+                    val timestamp = joDataSnapshot.child("timestamp").value as? String ?: ""
+
+                    val totalPriceNode = joDataSnapshot.child("TotalPrice-xxx")
+                    val totalPrice = totalPriceNode.value as? Double ?: 0.0
+
+                    val orderItems = mutableListOf<OrderData>()
+                    for (itemSnapshot in totalPriceNode.children) {
+                        val orderItem = itemSnapshot.getValue(OrderData::class.java)
+                        orderItem?.let { orderItems.add(it) }
+                    }
+
+                    val joData = JONumberData(
+                        joNumber = joNumber,
+                        timestamp = timestamp,
+                        details = OrderDetails(
+                            totalPrice = BigDecimal.valueOf(totalPrice),
+                            orderItems = orderItems
+                        )
+                    )
+
+                    val receiptDataRow = createReceiptDataRow(joData)
+                    adapterData.add(receiptDataRow)
                 }
             }
+        }
+
+        return adapterData
+    }
+
+    private fun createReceiptDataRow(joData: JONumberData): ReceiptDataRow {
+        val formattedTime = joData.timestamp
+        val orderDetails = joData.details
+        val orderItems = orderDetails?.orderItems ?: emptyList()
+        val orderTotalPrice = orderDetails?.totalPrice ?: BigDecimal.ZERO
+
+        return ReceiptDataRow(
+            joNumber = joData.joNumber,
+            timestamp = formattedTime,
+            orderItems = orderItems,
+            totalPrice = orderTotalPrice,
+            isExpanded = false
+        )
+    }
+
+    private fun isSameDate(date1: Date, date2: Date): Boolean {
+        val cal1 = Calendar.getInstance()
+        val cal2 = Calendar.getInstance()
+        cal1.time = date1
+        cal2.time = date2
+        return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
+                cal1.get(Calendar.MONTH) == cal2.get(Calendar.MONTH) &&
+                cal1.get(Calendar.DAY_OF_MONTH) == cal2.get(Calendar.DAY_OF_MONTH)
     }
 }
