@@ -61,6 +61,7 @@ class Receipts : Fragment() {
 
     private fun processAndPrepareData(snapshot: DataSnapshot): List<ReceiptDataRow> {
         val adapterData = mutableListOf<ReceiptDataRow>()
+        Log.d("adapterData", "$adapterData")
 
         for (dateSnapshot in snapshot.children) {
             val dateString = dateSnapshot.key ?: continue
@@ -76,8 +77,9 @@ class Receipts : Fragment() {
                     val totalPriceString = totalPriceNode.value.toString()
                     val totalPrice = totalPriceString.toDoubleOrNull() ?: 0.0
 
+                    val totalDataArray = joDataSnapshot.child("totalData").children
                     val orderItems = mutableListOf<OrderData>()
-                    for (itemSnapshot in totalPriceNode.children) {
+                    for (itemSnapshot in totalDataArray) {
                         val orderItem = itemSnapshot.getValue(OrderData::class.java)
                         orderItem?.let { orderItems.add(it) }
                     }

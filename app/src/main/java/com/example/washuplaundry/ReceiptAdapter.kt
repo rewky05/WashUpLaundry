@@ -38,17 +38,17 @@ class ReceiptAdapter(private val receiptData: List<ReceiptDataRow>) :
 
         if (row.isExpanded) {
             holder.detailsContainer.visibility = View.VISIBLE
-            if (row.orderItems.size >= 5) {
-                holder.employee.text = "Employee: ${row.orderItems[4].userName}"
+
+            // Since orderItems is now a list, we need to display them differently
+            if (row.orderItems.isNotEmpty()) { // Check if there are order items
+                holder.employee.text = "Employee: ${row.orderItems[0].userName}" // Assuming the first item has the employee
+                holder.serviceName.text = "${row.orderItems[0].name}"
+                holder.itemSubtotal.text = "${row.orderItems[0].subtotal}"
+                holder.kilo.text = "${row.orderItems[0].kilo}"
+                holder.price.text = "${row.orderItems[0].price}"
             } else {
-                holder.employee.text = "Employee: ${row.orderItems[0].userName}"
+                // Handle the case where there are no order items (e.g., display a "No items" message)
             }
-            holder.serviceName.text = "${row.orderItems[0].name}"
-            holder.itemSubtotal.text = "${row.orderItems[3].subtotal}"
-            holder.kilo.text = "${row.orderItems[2].kilo}"
-            holder.price.text = "${row.orderItems[1].price}"
-            Log.d("Order items:", "${row.orderItems}")
-            Log.d("Order items size:", "${row.orderItems.size}")
         } else {
             holder.detailsContainer.visibility = View.GONE
         }

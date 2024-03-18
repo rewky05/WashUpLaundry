@@ -11,4 +11,6 @@ data class OrderData(
     val userName: String = "",
     val userId: String = "",
 //    var totalPrice: Double
-)
+) {
+    constructor() : this("", 0.0, 0.0, 0.0, "", "")
+}
