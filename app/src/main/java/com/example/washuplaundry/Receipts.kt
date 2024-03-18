@@ -13,7 +13,6 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
-import java.math.BigDecimal
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -71,10 +70,11 @@ class Receipts : Fragment() {
 
                 for (joDataSnapshot in dateSnapshot.children) {
                     val joNumber = joDataSnapshot.key ?: continue
-                    val timestamp = joDataSnapshot.child("timestamp").value as? String ?: ""
+                    val timestamp = joDataSnapshot.child("time").value as? String ?: ""
 
-                    val totalPriceNode = joDataSnapshot.child("TotalPrice-xxx")
-                    val totalPrice = totalPriceNode.value as? Double ?: 0.0
+                    val totalPriceNode = joDataSnapshot.child("total")
+                    val totalPriceString = totalPriceNode.value.toString()
+                    val totalPrice = totalPriceString.toDoubleOrNull() ?: 0.0
 
                     val orderItems = mutableListOf<OrderData>()
                     for (itemSnapshot in totalPriceNode.children) {
@@ -86,7 +86,7 @@ class Receipts : Fragment() {
                         joNumber = joNumber,
                         timestamp = timestamp,
                         details = OrderDetails(
-                            totalPrice = BigDecimal.valueOf(totalPrice),
+                            totalPrice = totalPrice,
                             orderItems = orderItems
                         )
                     )
@@ -103,8 +103,8 @@ class Receipts : Fragment() {
     private fun createReceiptDataRow(joData: JONumberData): ReceiptDataRow {
         val formattedTime = joData.timestamp
         val orderDetails = joData.details
-        val orderItems = orderDetails?.orderItems ?: emptyList()
-        val orderTotalPrice = orderDetails?.totalPrice ?: BigDecimal.ZERO
+        val orderItems = orderDetails.orderItems
+        val orderTotalPrice = orderDetails.totalPrice
 
         return ReceiptDataRow(
             joNumber = joData.joNumber,

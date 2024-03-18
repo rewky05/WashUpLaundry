@@ -31,7 +31,6 @@ class TotalPreview : Fragment() {
     private lateinit var adapter: OrderDataAdapter
     private lateinit var totalPriceTextView: TextView
 
-    // Firebase References
     private val joNumberRef = Firebase.database.getReference("currentJONumber")
     private val databaseRef = Firebase.database.getReference("Receipts/Unpaid")
 
@@ -210,12 +209,13 @@ class TotalPreview : Fragment() {
             val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
             val currentTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
             val pathTotal = totalPrice.toString()
-            val pathTotalFinal = pathTotal.substring(0, pathTotal.indexOf("."))
+//            val pathTotalFinal = pathTotal.substring(0, pathTotal.indexOf("."))
             val databaseRef = databaseRef.child(currentDate).child("JO-$newJONumber")
 
             val data = mapOf(
-                "timestamp" to currentTime,
-                "totalPrice-$pathTotalFinal" to orderData.map { it.toDatabaseMap(userId, userName) }
+                "time" to currentTime,
+                "total" to pathTotal,
+                "totalData" to orderData.map { it.toDatabaseMap(userId, userName) }
             )
 
             databaseRef.setValue(data)

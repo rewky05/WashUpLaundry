@@ -100,7 +100,7 @@ class RegularService : Fragment() {
                 val currentKilo = kiloInput.text.toString().toDoubleOrNull() ?: 0.0
                 val newKilo = if (currentKilo == 3.0) 0.0 else currentKilo - 0.5
 
-                if (newKilo >= 0.0) { // Only update if valid
+                if (newKilo >= 0.0) {
                     kiloInput.setText(newKilo.toString())
                     updateTotalPrice()
                 } else {
@@ -156,20 +156,15 @@ class RegularService : Fragment() {
             val kiloInput = serviceView.findViewById<EditText>(R.id.kiloInput)
             val enteredKilo = kiloInput.text.toString().toDoubleOrNull() ?: 0.0
 
-            // Add to orderItems only if quantity is not zero
             if (enteredKilo > 0.0) {
                 val subtotal = enteredKilo * price
                 val existingItem = orderViewModel.orderItems.value?.find { it.name == serviceName }
 
                 if (existingItem != null) {
-                    // Update existing item
                     existingItem.kilo += enteredKilo
-                    // Recalculate subtotal if needed (if price might have changed)
                     existingItem.subtotal = existingItem.kilo * existingItem.price
                 } else {
-                    // Create a new item
-                    val orderItem = OrderData(name = serviceName, price = price, kilo = enteredKilo, subtotal = subtotal) // Include totalPrice
-                    // totalPrice = orderViewModel.totalPrice.value ?: 0.0
+                    val orderItem = OrderData(name = serviceName, price = price, kilo = enteredKilo, subtotal = subtotal)
                     orderViewModel.addOrderItem(orderItem)
                 }
                 currentTotal += subtotal

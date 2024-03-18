@@ -1,8 +1,6 @@
 package com.example.washuplaundry
 
-import java.math.BigDecimal
-
 data class OrderDetails(
-    val totalPrice: BigDecimal = BigDecimal.ZERO,
+    val totalPrice: Double = 0.0,
     val orderItems: List<OrderData> = emptyList()
 )

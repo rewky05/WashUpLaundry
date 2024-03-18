@@ -11,7 +11,7 @@ class OrderViewModel : ViewModel() {
 
     private val dailyOrderCounter = AtomicInteger(0)
 
-    private val _totalPrice = MutableLiveData<Double>(0.0) // Initialize with a default value
+    private val _totalPrice = MutableLiveData<Double>(0.0)
     val totalPrice: LiveData<Double> = _totalPrice
 
     val _orderItems = MutableLiveData<List<OrderData>>(emptyList())
