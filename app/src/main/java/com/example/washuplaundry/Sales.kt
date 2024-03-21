@@ -98,7 +98,7 @@ class Sales : Fragment() {
                 val fragmentTransaction = requireActivity().supportFragmentManager.beginTransaction()
 
                 when (selectedCategory) {
-                    "Regular" -> handleFragment("regular_service", { RegularService.newInstance() })
+                    "Regular" -> handleFragment("regular_service", { RegularService() })
                     "Self Service" -> handleFragment("self_service", { SelfService() })
                     "Dry Clean" -> handleFragment("dry_clean", { DryCleanService() })
                     else -> {  }
