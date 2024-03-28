@@ -59,6 +59,26 @@
                 android:textSize="16sp" />
 
             <TextView
+                android:id="@+id/loadorpcs"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:visibility="gone"/>
+
+            <TextView
+                android:id="@+id/pcs"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:visibility="gone"/>
+
+            <TextView
                 android:id="@+id/equals"
                 android:text="="
                 android:gravity="center_horizontal"

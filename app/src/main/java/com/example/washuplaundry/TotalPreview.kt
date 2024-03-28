@@ -8,10 +8,12 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -20,7 +22,6 @@ import com.google.firebase.database.MutableData
 import com.google.firebase.database.Transaction
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
-import com.google.gson.Gson
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -28,7 +29,7 @@ import java.util.Locale
 class TotalPreview : Fragment() {
 
     private lateinit var orderViewModel: OrderViewModel
-    private lateinit var adapter: OrderDataAdapter
+    private lateinit var combinedAdapter: CombinedOrderDataAdapter
     private lateinit var totalPriceTextView: TextView
 
     private val joNumberRef = Firebase.database.getReference("currentJONumber")
@@ -48,35 +49,22 @@ class TotalPreview : Fragment() {
 
         totalPriceTextView = view.findViewById(R.id.total_price)
 
-        val orderItemsJson = arguments?.getString("orderItems")
-        if (orderItemsJson != null) {
-            val gson = Gson()
-            val orderItems: ArrayList<OrderData> = gson.fromJson(orderItemsJson, Array<OrderData>::class.java).toList() as ArrayList<OrderData>
+        val recyclerView = view.findViewById<RecyclerView>(R.id.order_items_list)
+        recyclerView.layoutManager = LinearLayoutManager(context)
 
-            Log.d("OrderItems Size", "Size of orderItems: ${orderItems.size}")
+        combinedAdapter = CombinedOrderDataAdapter()
+        recyclerView.adapter = combinedAdapter
 
-            val orderItemsList = view.findViewById<RecyclerView>(R.id.order_items_list)
-                orderItemsList.layoutManager = LinearLayoutManager(context)
+        orderViewModel.orderItems.observe(viewLifecycleOwner) { orderItemsData ->
+            val combinedOrderItems = mutableListOf<OrderItem>()
 
-            if (orderItems != null && orderItems.isNotEmpty()) {
-                adapter.orderItems = orderItems
-                adapter.notifyDataSetChanged()
-            } else {
-                    // No order items
-                }
-        }
+            orderItemsData.forEach { orderItemData ->
+                combinedOrderItems.addAll(orderItemData.orderData)
+                combinedOrderItems.addAll(orderItemData.selfServiceOrderData)
+                combinedOrderItems.addAll(orderItemData.dryCleanOrderData)
+            }
 
-        val orderItemsList = view.findViewById<RecyclerView>(R.id.order_items_list)
-        orderItemsList.layoutManager = LinearLayoutManager(context)
-
-        // ViewModel Observers
-        orderViewModel = ViewModelProvider(requireActivity())[OrderViewModel::class.java]
-        adapter = OrderDataAdapter(emptyList())
-        orderItemsList.adapter = adapter
-
-        orderViewModel.orderItems.observe(viewLifecycleOwner) { orderItems ->
-            adapter.orderItems = orderItems
-            adapter.notifyDataSetChanged()
+            combinedAdapter.updateData(combinedOrderItems)
         }
 
         orderViewModel.totalPrice.observe(viewLifecycleOwner) { totalPrice ->
@@ -89,7 +77,7 @@ class TotalPreview : Fragment() {
 
             if (userId != null) {
                 fetchUserNameAndSaveOrder(userId) { userName, userId ->
-                    val extractedOrderData = collectOrderItemsFromUI()
+                    val orderItemsData = collectOrderItemsFromUI()
 
                     joNumberRef.runTransaction(object : Transaction.Handler {
                         override fun doTransaction(currentData: MutableData): Transaction.Result {
@@ -106,57 +94,60 @@ class TotalPreview : Fragment() {
                         ) {
                             if (committed) {
                                 val newJONumber = snapshot?.getValue(Int::class.java) ?: 80
-                                val totalPrice = extractedOrderData.sumOf { it.subtotal }
-                                Log.d("Logging newJONumber and totalPrice", "$newJONumber, $totalPrice")
-                                fetchUserName(userId) { userName ->
-                                    saveOrderDataToRealtime(
-                                        extractedOrderData,
-                                        newJONumber,
-                                        userName,
-                                        totalPrice
-                                    )
+
+                                val totalPrice =
+                                    orderItemsData.orderData.sumOf { it.subtotal } +
+                                            orderItemsData.selfServiceOrderData.sumOf { it.subtotal } +
+                                            orderItemsData.dryCleanOrderData.sumOf { it.subtotal }
+
+                                Log.d("totalPrice in preview", "$totalPrice")
+
+                                if (totalPrice > 0.0) {
+
+                                    fetchUserName(userId) { userName ->
+                                        saveOrderDataToRealtime(
+                                            orderItemsData.orderData,
+                                            orderItemsData.selfServiceOrderData,
+                                            orderItemsData.dryCleanOrderData,
+                                            newJONumber,
+                                            userName,
+                                            totalPrice
+                                        )
+                                    }
+                                    combinedAdapter.clearLists()
+                                    orderViewModel.resetTotalPrice()
+                                } else {
+                                    Toast.makeText(context, "There are no added orders yet", Toast.LENGTH_SHORT).show()
                                 }
-
-                                orderViewModel._orderItems.value = emptyList()
-                                orderViewModel.addNewOrder()
-                                Log.d("Receipt saved", "Receipt saved!!!")
-//                                orderViewModel.resetTotalPrice()
-                                totalPriceTextView.text = "Total: ₱0.0"
-                            } else {
-
                             }
                         }
                     })
                 }
             }
         }
+
         return view
     }
 
-    private fun collectOrderItemsFromUI(): List<OrderData> {
-        Log.d("Order Collection", "Collecting order items")
+    private fun collectOrderItemsFromUI(): OrderItemsData {
         val extractedOrderData = mutableListOf<OrderData>()
-        val recyclerView = view?.findViewById<RecyclerView>(R.id.order_items_list)
+        val extractedSelfOrderData = mutableListOf<SelfServiceOrderData>()
+        val extractedDryOrderData = mutableListOf<DryCleanOrderData>()
 
-        if (recyclerView != null) {
-            for (index in 0 until recyclerView.childCount) {
-                val holder =
-                    recyclerView.getChildViewHolder(recyclerView.getChildAt(index)) as OrderDataAdapter.OrderDataViewHolder
-                val name = holder.name.text.toString()
-                val price = holder.price.text.toString().removePrefix("₱").toDouble()
-                val weightString = holder.kilo.text.toString()
-                val numericalWeightString = weightString.substring(0, weightString.indexOf(" kg"))
-                val weight = numericalWeightString.toDouble()
-                val subTotal = holder.subTotal.text.toString().removePrefix("₱").toDouble()
-
-                extractedOrderData.add(OrderData(name, price, weight, subTotal))
+        for (i in 0 until combinedAdapter.itemCount) {
+            val item = combinedAdapter.combinedOrderItems[i]
+            if (item is OrderData) {
+                extractedOrderData.add(item)
+            } else if (item is SelfServiceOrderData) {
+                extractedSelfOrderData.add(item)
+            } else if (item is DryCleanOrderData) {
+                extractedDryOrderData.add(item)
             }
-        } else {
-            // RecyclerView not found
         }
 
-        return extractedOrderData
+    return OrderItemsData(extractedOrderData, extractedSelfOrderData, extractedDryOrderData)
     }
+
 
     private fun fetchUserName(userId: String, callback: (userName: String) -> Unit) {
         FirebaseDatabase.getInstance().getReference("Users").child(userId).child("userName")
@@ -166,11 +157,14 @@ class TotalPreview : Fragment() {
                 callback(userName)
             }
             .addOnFailureListener {
-
+                Log.e("Fetch User Name", "Failed to fetch user name")
             }
     }
 
-    private fun fetchUserNameAndSaveOrder(userId: String, callback: (userName: String, userId: String) -> Unit) {
+    private fun fetchUserNameAndSaveOrder(
+        userId: String,
+        callback: (userName: String, userId: String) -> Unit
+    ) {
         FirebaseDatabase.getInstance().getReference("Users").child(userId).child("userName")
             .get()
             .addOnSuccessListener { dataSnapshot ->
@@ -179,43 +173,72 @@ class TotalPreview : Fragment() {
                     callback(userName, userId)
                 }
             }
+            .addOnFailureListener {
+                Log.e("Fetch User Name", "Failed to fetch user name")
+            }
     }
 
     private fun saveOrderDataToRealtime(
         orderData: List<OrderData>,
+        selfServiceOrderData: List<SelfServiceOrderData>,
+        dryServiceOrderData: List<DryCleanOrderData>,
         newJONumber: Int,
         userName: String,
         totalPrice: Double
     ) {
-        Log.d("Saving Order", "Saving order data to Firebase")
         val userId = FirebaseAuth.getInstance().currentUser?.uid
-        val orderMap = mutableMapOf<String, Any?>()
-
-        for ((index, item) in orderData.withIndex()) {
-            val itemMap = item.toDatabaseMap(userId!!, userName)
-            orderMap[index.toString()] = mapOf(
-                "name" to (itemMap["name"] as? String ?: ""),
-                "price" to (itemMap["price"] as? Double ?: 0.0),
-                "kilo" to (itemMap["kilo"] as? Double ?: 0.0),
-                "subtotal" to (itemMap["subtotal"] as? Double ?: 0.0),
-                "userName" to userName,
-                "userId" to userId
-            )
-        }
-
-        Log.d("totalPrice", "$totalPrice")
 
         if (userId != null) {
             val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
             val currentTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
-            val pathTotal = totalPrice.toString()
-//            val pathTotalFinal = pathTotal.substring(0, pathTotal.indexOf("."))
             val databaseRef = databaseRef.child(currentDate).child("JO-$newJONumber")
+
+            val totalDataList = mutableListOf<Any>()
+
+            orderData.forEach { order ->
+                val orderMap = mapOf(
+                    "name" to order.itemName,
+                    "price" to order.itemPrice,
+                    "kilo" to order.kilo,
+                    "subtotal" to order.itemSubtotal,
+                    "userName" to userName,
+                    "userId" to userId,
+                    "orderType" to "regular"
+                )
+                totalDataList.add(orderMap)
+            }
+
+            // Add self-service order data to totalDataList
+            selfServiceOrderData.forEach { selfServiceOrder ->
+                val selfServiceMap = mapOf(
+                    "name" to selfServiceOrder.itemName,
+                    "price" to selfServiceOrder.itemPrice,
+                    "loadOrPcs" to selfServiceOrder.loadOrPcs,
+                    "subtotal" to selfServiceOrder.itemSubtotal,
+                    "userName" to userName,
+                    "userId" to userId,
+                    "orderType" to "selfService"
+                )
+                totalDataList.add(selfServiceMap)
+            }
+
+            dryServiceOrderData.forEach { dryServiceOrder ->
+                val dryServiceMap = mapOf(
+                    "name" to dryServiceOrder.itemName,
+                    "price" to dryServiceOrder.itemPrice,
+                    "pcs" to dryServiceOrder.pcs,
+                    "subtotal" to dryServiceOrder.itemSubtotal,
+                    "userName" to userName,
+                    "userId" to userId,
+                    "orderType" to "dryClean"
+                )
+                totalDataList.add(dryServiceMap)
+            }
 
             val data = mapOf(
                 "time" to currentTime,
-                "total" to pathTotal,
-                "totalData" to orderData.map { it.toDatabaseMap(userId, userName) }
+                "total" to totalPrice.toString(),
+                "totalData" to totalDataList
             )
 
             databaseRef.setValue(data)
@@ -226,31 +249,17 @@ class TotalPreview : Fragment() {
                     Log.e("Firebase Save Error", "Error saving data", exception)
                 }
         }
-
-
-        Log.d("totalPrice", "$totalPrice")
-
-    }
-
-    private fun OrderData.toDatabaseMap(userId: String, userName: String): Map<String, Any?> {
-        return mapOf (
-            "name" to name,
-            "price" to price,
-            "kilo" to kilo,
-            "subtotal" to subtotal,
-            "userName" to userName,
-            "userId" to userId
-        )
     }
 
     override fun onResume() {
         super.onResume()
         requireActivity().findViewById<ImageButton>(R.id.backButton).visibility = View.VISIBLE
+        requireActivity().findViewById<MaterialButton>(R.id.btnClearPreview).visibility = View.VISIBLE
     }
 
     override fun onPause() {
         super.onPause()
         requireActivity().findViewById<ImageButton>(R.id.backButton).visibility = View.GONE
+        requireActivity().findViewById<MaterialButton>(R.id.btnClearPreview).visibility = View.GONE
     }
-
 }

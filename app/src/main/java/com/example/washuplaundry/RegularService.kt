@@ -34,12 +34,6 @@ class RegularService : Fragment() {
     private var kiloTracker = 0.0
     private lateinit var addToOrder: Button
 
-    companion object {
-        fun newInstance(): RegularService {
-            return RegularService()
-        }
-    }
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -128,7 +122,7 @@ class RegularService : Fragment() {
             }
 
             buttonPlus.setOnClickListener {
-                val totalKilos = orderViewModel.totalPrice.value?.toDouble() ?: 0.0
+                val totalPrice = orderViewModel.totalPrice.value?.toDouble() ?: 0.0
 
                 for (i in 0 until servicesContainer.childCount) {
                     val serviceView = servicesContainer.getChildAt(i)
@@ -143,7 +137,7 @@ class RegularService : Fragment() {
                 val newKilo =
                     if (kiloTracker >= 3.0 || currentKilo >= 3.0) {
                         currentKilo + 1.0
-                    } else if (totalKilos > 29.0) {
+                    } else if (totalPrice >= 87.0) {
                         currentKilo + 1.0
                     } else {
                         currentKilo + 3.0
@@ -182,9 +176,8 @@ class RegularService : Fragment() {
     private fun addToOrder() {
         var currentTotal = 0.0
         var hasMinimumService = false // Flag to check if at least one service has 3 kilos
-        val totalKilos = orderViewModel.totalPrice.value?.toDouble() ?: 0.0
+        val totalPrice = orderViewModel.totalPrice.value?.toDouble() ?: 0.0
 
-        // Check if at least one service already has 3 kilos in the preview
         for (i in 0 until servicesContainer.childCount) {
             val serviceView = servicesContainer.getChildAt(i)
             val kiloInput = serviceView.findViewById<EditText>(R.id.kiloInput)
@@ -195,7 +188,6 @@ class RegularService : Fragment() {
             }
         }
 
-        // If at least one service has 3 kilos, proceed with adding more kilos or adding the order
         if (hasMinimumService) {
             for (i in 0 until servicesContainer.childCount) {
                 val serviceView = servicesContainer.getChildAt(i)
@@ -206,27 +198,37 @@ class RegularService : Fragment() {
 
                 if (enteredKilo > 0.0) { // Allow adding more kilos if the entered kilos are greater than 0
                     val subtotal = enteredKilo * price
-                    val existingItem = orderViewModel.orderItems.value?.find { it.name == serviceName }
+                    val existingItem = orderViewModel.orderItems.value?.find { it.orderData.any { it.name == serviceName } }
 
                     if (existingItem != null) {
-                        existingItem.kilo += enteredKilo
-                        existingItem.subtotal = existingItem.kilo * existingItem.price
+                        val updatedOrderDataList = existingItem.orderData.map { orderData ->
+                            if (orderData.itemName == serviceName) {
+                                orderData.copy(
+                                    itemKilo = orderData.kilo + enteredKilo,
+                                    itemSubtotal = (orderData.kilo + enteredKilo) * orderData.itemPrice
+                                )
+                            } else {
+                                orderData
+                            }
+                        }
+                        val updatedOrderItemsData = existingItem.copy(orderData = updatedOrderDataList)
+                        orderViewModel.addOrderItem(updatedOrderItemsData)
                     } else {
-                        val orderItem = OrderData(
-                            name = serviceName,
-                            price = price,
-                            kilo = enteredKilo,
-                            subtotal = subtotal
+                        val orderData = OrderData(
+                            itemName = serviceName,
+                            itemPrice = price,
+                            itemKilo = enteredKilo,
+                            itemSubtotal = subtotal
                         )
-                        orderViewModel.addOrderItem(orderItem)
+                        val orderItemsData = OrderItemsData(listOf(orderData), emptyList(), emptyList())
+                        orderViewModel.addOrderItem(orderItemsData)
                     }
                     currentTotal += subtotal
                 }
             }
 
-            // Add the order and reset inputs if there are items in the order
             if (currentTotal > 0.0) {
-                orderViewModel.addNewOrder()
+                orderViewModel.totalOrder()
                 resetInputs()
             } else {
                 Toast.makeText(
@@ -235,7 +237,7 @@ class RegularService : Fragment() {
                     Toast.LENGTH_SHORT
                 ).show()
             }
-        } else if (totalKilos > 29.0) {
+        } else if (totalPrice >= 87.0) {
             for (i in 0 until servicesContainer.childCount) {
                 val serviceView = servicesContainer.getChildAt(i)
                 val serviceName =
@@ -244,31 +246,42 @@ class RegularService : Fragment() {
                 val kiloInput = serviceView.findViewById<EditText>(R.id.kiloInput)
                 val enteredKilo = kiloInput.text.toString().toDoubleOrNull() ?: 0.0
 
-                if (enteredKilo > 0.0) { // Allow adding more kilos if the entered kilos are greater than 0
+                if (enteredKilo > 0.0) {
                     val subtotal = enteredKilo * price
-                    val existingItem = orderViewModel.orderItems.value?.find { it.name == serviceName }
+                    val existingItem = orderViewModel.orderItems.value?.find { it.orderData.any { it.name == serviceName } }
 
                     if (existingItem != null) {
-                        existingItem.kilo += enteredKilo
-                        existingItem.subtotal = existingItem.kilo * existingItem.price
+                        val updatedOrderDataList = existingItem.orderData.map { orderData ->
+                            if (orderData.itemName == serviceName) {
+                                // Update existing orderData item
+                                orderData.copy(
+                                    itemKilo = orderData.kilo + enteredKilo,
+                                    itemSubtotal = (orderData.kilo + enteredKilo) * orderData.itemPrice
+                                )
+                            } else {
+                                orderData
+                            }
+                        }
+                        val updatedOrderItemsData = existingItem.copy(orderData = updatedOrderDataList)
+                        orderViewModel.addOrderItem(updatedOrderItemsData)
                     } else {
-                        val orderItem = OrderData(
-                            name = serviceName,
-                            price = price,
-                            kilo = enteredKilo,
-                            subtotal = subtotal
+                        val orderData = OrderData(
+                            itemName = serviceName,
+                            itemPrice = price,
+                            itemKilo = enteredKilo,
+                            itemSubtotal = subtotal
                         )
-                        orderViewModel.addOrderItem(orderItem)
+                        val orderItemsData = OrderItemsData(listOf(orderData), emptyList(),  emptyList())
+                        orderViewModel.addOrderItem(orderItemsData)
                     }
                     currentTotal += subtotal
                 }
             }
             if (currentTotal > 0.0) {
-                orderViewModel.addNewOrder()
+                orderViewModel.totalOrder()
                 resetInputs()
             }
         } else {
-            // No service has 3 kilos, inform the user
             Toast.makeText(
                 context,
                 "At least one service must have 3 kilos to proceed",

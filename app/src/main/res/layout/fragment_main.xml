@@ -26,12 +26,25 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1" />
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnClearPreview"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginEnd="16dp"
+                android:backgroundTint="@color/yellow"
+                android:text="CLEAR"
+                android:textColor="@color/black"
+                android:textStyle="bold"
+                android:visibility="gone"
+                />
+
             <ImageButton
                 android:id="@+id/backButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
-                android:layout_marginHorizontal="40dp"
+                android:layout_marginEnd="40dp"
                 android:src="@drawable/back_button_icon"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:visibility="gone" />

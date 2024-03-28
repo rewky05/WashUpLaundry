@@ -6,10 +6,14 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.button.MaterialButton
 
 class Main : Fragment() {
     private var currentFragmentTag: String? = null
+    private lateinit var orderViewModel: OrderViewModel
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -20,6 +24,8 @@ class Main : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        orderViewModel = ViewModelProvider(requireActivity())[OrderViewModel::class.java]
 
         val bottomNavigation: BottomNavigationView = view.findViewById(R.id.bottom_navigation)
         bottomNavigation.setOnItemSelectedListener { item ->
@@ -55,6 +61,11 @@ class Main : Fragment() {
                 parentFragmentManager.popBackStack()
             }
         }
+
+        requireActivity().findViewById<MaterialButton>(R.id.btnClearPreview).setOnClickListener {
+            orderViewModel.resetTotalPrice()
+        }
+
     }
 
     private fun replaceFragment(fragment: Fragment) {

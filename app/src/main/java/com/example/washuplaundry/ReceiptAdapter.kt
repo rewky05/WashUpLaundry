@@ -1,6 +1,5 @@
 package com.example.washuplaundry
 
-import android.content.Context
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -28,26 +27,47 @@ class ReceiptAdapter(private val receiptData: List<ReceiptDataRow>) :
 
     override fun onBindViewHolder(holder: ReceiptViewHolder, position: Int) {
         val row = receiptData[position]
-        holder.joNumberTextView.text = "JO Number: ${row.joNumber}"
+        holder.joNumberTextView.text = row.joNumber
         holder.timeTextView.text = "Time: ${row.timestamp}"
         holder.totalPriceTextView.text = "₱${row.totalPrice}"
-        val userName = row.orderItems.firstOrNull()?.userName ?: ""
+
+        val userName = row.orderItems.firstOrNull()?.selfServiceOrderData?.firstOrNull()?.userName ?:
+        row.orderItems.firstOrNull()?.orderData?.firstOrNull()?.userName ?: row.orderItems.firstOrNull()?.dryCleanOrderData?.firstOrNull()?.userName ?: ""
+
+        Log.d("user", userName)
         holder.employee.text = userName
 
         if (row.isExpanded) {
             holder.detailsContainer.visibility = View.VISIBLE
             holder.detailsContainer.removeAllViews()
 
-            for (orderItem in row.orderItems) {
-                val itemDetailsView = LayoutInflater.from(holder.itemView.context).inflate(R.layout.receipt_item_detail, holder.detailsContainer, false)
+            for (orderItemsData in row.orderItems) {
+                for (orderItem in orderItemsData.orderData + orderItemsData.selfServiceOrderData + orderItemsData.dryCleanOrderData) {
+                    val itemDetailsView = LayoutInflater.from(holder.itemView.context).inflate(R.layout.receipt_item_detail, holder.detailsContainer, false)
 
-                itemDetailsView.findViewById<TextView>(R.id.service_name).text = orderItem.name
-                itemDetailsView.findViewById<TextView>(R.id.kilo).text = orderItem.kilo.toString()
-                itemDetailsView.findViewById<TextView>(R.id.price).text = orderItem.price.toString()
-                itemDetailsView.findViewById<TextView>(R.id.item_subtotal).text = orderItem.subtotal.toString()
+                    itemDetailsView.findViewById<TextView>(R.id.service_name).text = orderItem.name
+                    itemDetailsView.findViewById<TextView>(R.id.kilo).text = orderItem.kilo.toString()
+                    itemDetailsView.findViewById<TextView>(R.id.price).text = orderItem.price.toString()
+                    itemDetailsView.findViewById<TextView>(R.id.item_subtotal).text = orderItem.subtotal.toString()
 
-                holder.detailsContainer.addView(itemDetailsView)
+                    if (orderItem is SelfServiceOrderData) {
+                        val visibleKilo = itemDetailsView.findViewById<TextView>(R.id.kilo)
+                        visibleKilo.visibility = View.GONE
+
+                        itemDetailsView.findViewById<TextView>(R.id.loadorpcs).visibility = View.VISIBLE
+                        itemDetailsView.findViewById<TextView>(R.id.loadorpcs).text = orderItem.loadOrPcs.toString()
+                    } else if (orderItem is DryCleanOrderData) {
+                        val visibleKilo = itemDetailsView.findViewById<TextView>(R.id.kilo)
+                        visibleKilo.visibility = View.GONE
+
+                        itemDetailsView.findViewById<TextView>(R.id.pcs).visibility = View.VISIBLE
+                        itemDetailsView.findViewById<TextView>(R.id.pcs).text = orderItem.pcs.toString()
+                    }
+
+                    holder.detailsContainer.addView(itemDetailsView)
+                }
             }
+
         } else {
             holder.detailsContainer.visibility = View.GONE
         }

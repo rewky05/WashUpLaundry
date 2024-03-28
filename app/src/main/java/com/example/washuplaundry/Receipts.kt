@@ -79,9 +79,28 @@ class Receipts : Fragment() {
 
                     val totalDataArray = joDataSnapshot.child("totalData").children
                     val orderItems = mutableListOf<OrderData>()
+                    val selfServiceOrderItems = mutableListOf<SelfServiceOrderData>()
+                    val dryCleanOrderItems = mutableListOf<DryCleanOrderData>()
+
                     for (itemSnapshot in totalDataArray) {
-                        val orderItem = itemSnapshot.getValue(OrderData::class.java)
-                        orderItem?.let { orderItems.add(it) }
+                        val orderType = itemSnapshot.child("orderType").value as? String
+
+                        if (orderType == "regular") {
+                            val orderItem = itemSnapshot.getValue(OrderData::class.java)
+                            if (orderItem != null) {
+                                orderItems.add(orderItem)
+                            }
+                        } else if (orderType == "selfService") {
+                            val serviceItem = itemSnapshot.getValue(SelfServiceOrderData::class.java)
+                            if (serviceItem != null) {
+                                selfServiceOrderItems.add(serviceItem)
+                            }
+                        } else if (orderType == "dryClean") {
+                            val dryServiceItem = itemSnapshot.getValue(DryCleanOrderData::class.java)
+                            if (dryServiceItem != null) {
+                                dryCleanOrderItems.add(dryServiceItem)
+                            }
+                        }
                     }
 
                     val joData = JONumberData(
@@ -89,7 +108,7 @@ class Receipts : Fragment() {
                         timestamp = timestamp,
                         details = OrderDetails(
                             totalPrice = totalPrice,
-                            orderItems = orderItems
+                            orderItems = listOf(OrderItemsData(orderData = orderItems, selfServiceOrderData = selfServiceOrderItems, dryCleanOrderData = dryCleanOrderItems))
                         )
                     )
 
@@ -105,13 +124,12 @@ class Receipts : Fragment() {
     private fun createReceiptDataRow(joData: JONumberData): ReceiptDataRow {
         val formattedTime = joData.timestamp
         val orderDetails = joData.details
-        val orderItems = orderDetails.orderItems
         val orderTotalPrice = orderDetails.totalPrice
 
         return ReceiptDataRow(
             joNumber = joData.joNumber,
             timestamp = formattedTime,
-            orderItems = orderItems,
+            orderItems = orderDetails.orderItems,
             totalPrice = orderTotalPrice,
             isExpanded = false
         )

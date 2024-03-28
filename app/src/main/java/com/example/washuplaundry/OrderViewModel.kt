@@ -3,32 +3,30 @@ package com.example.washuplaundry
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import java.util.concurrent.atomic.AtomicInteger
 
 class OrderViewModel : ViewModel() {
-    private val _prices = MutableLiveData<List<Double>>(emptyList())
-    private val prices: LiveData<List<Double>> = _prices
-
-    private val dailyOrderCounter = AtomicInteger(0)
-
     private val _totalPrice = MutableLiveData<Double>(0.0)
     val totalPrice: LiveData<Double> = _totalPrice
 
-    val _orderItems = MutableLiveData<List<OrderData>>(emptyList())
-    val orderItems: LiveData<List<OrderData>> = _orderItems
+    private val _orderItems = MutableLiveData<List<OrderItemsData>>(emptyList())
+    val orderItems: LiveData<List<OrderItemsData>> = _orderItems
 
-    fun addNewOrder() {
-        val updatedTotalPrice = _orderItems.value?.sumOf { it.subtotal } ?: 0.0
-        _totalPrice.postValue(updatedTotalPrice)
+    fun totalOrder() {
+        val orderDataTotal = _orderItems.value?.flatMap { it.orderData }?.sumOf { it.itemSubtotal } ?: 0.0
+        val selfServiceOrderDataTotal = _orderItems.value?.flatMap { it.selfServiceOrderData }?.sumOf { it.itemSubtotal } ?: 0.0
+        val dryCleanOrderDataTotal = _orderItems.value?.flatMap { it.dryCleanOrderData }?.sumOf { it.itemSubtotal } ?: 0.0
+
+        _totalPrice.value = orderDataTotal + selfServiceOrderDataTotal + dryCleanOrderDataTotal
     }
 
-    fun addOrderItem(orderItem: OrderData) {
+    fun addOrderItem(orderItem: OrderItemsData) {
         val currentList = _orderItems.value?.toMutableList() ?: mutableListOf()
         currentList.add(orderItem)
         _orderItems.value = currentList
     }
 
-//    fun resetTotalPrice() {
-//        _totalPrice.postValue(0.0)
-//    }
+    fun resetTotalPrice() {
+        _orderItems.value = emptyList()
+        _totalPrice.value = 0.0
+    }
 }
