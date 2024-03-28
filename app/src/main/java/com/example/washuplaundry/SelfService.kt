@@ -3,8 +3,6 @@ package com.example.washuplaundry
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -99,9 +97,8 @@ class SelfService : Fragment() {
 
                 val newLoadorPcs = current_loadorpcs - 1.0
 
-
                 if (newLoadorPcs >= 0.0) {
-                    loadorpcs.setText(newLoadorPcs.toString())
+                    loadorpcs.setText("${String.format("%.2f", newLoadorPcs)}")
                     updateTotalPrice()
                 } else {
                     Toast.makeText(context, "Invalid Input", Toast.LENGTH_SHORT).show()
@@ -115,7 +112,7 @@ class SelfService : Fragment() {
                 val newLoadorPcs = current_loadorpcs + 1
 
                 if (newLoadorPcs >= 0.0) {
-                    loadorpcs.setText(newLoadorPcs.toString())
+                    loadorpcs.setText("${String.format("%.2f", newLoadorPcs)}")
                     updateTotalPrice()
                 } else {
                     Toast.makeText(context, "Invalid input: Please enter decimal numbers only", Toast.LENGTH_SHORT).show()
@@ -141,7 +138,7 @@ class SelfService : Fragment() {
             total += subtotal
         }
 
-        totalTextView.text = "Total: ₱$total"
+        totalTextView.text = "Total: ₱${String.format("%.2f", total)}"
     }
 
     private fun addToOrder() {

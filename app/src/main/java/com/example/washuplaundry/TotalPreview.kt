@@ -68,7 +68,7 @@ class TotalPreview : Fragment() {
         }
 
         orderViewModel.totalPrice.observe(viewLifecycleOwner) { totalPrice ->
-            totalPriceTextView.text = "Total: ₱$totalPrice"
+            totalPriceTextView.text = "Total: ₱${String.format("%.2f", totalPrice)}"
         }
 
         val btnCharge = view.findViewById<Button>(R.id.btnCharge)

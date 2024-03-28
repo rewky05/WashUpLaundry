@@ -113,7 +113,7 @@ class RegularService : Fragment() {
                     }
 
                 if (newKilo >= 0.0) {
-                    kiloInput.setText(newKilo.toString())
+                    kiloInput.setText("${String.format("%.2f", newKilo)}")
                     updateTotalPrice()
                 } else {
                     kiloInput.setText((currentKilo * 0.0).toString())
@@ -144,7 +144,7 @@ class RegularService : Fragment() {
                     }
 
                 if (newKilo >= 0.0) {
-                    kiloInput.setText(newKilo.toString())
+                    kiloInput.setText("${String.format("%.2f", newKilo)}")
                     updateTotalPrice()
                 } else {
                     Toast.makeText(context, "Invalid input: Please enter decimal numbers only", Toast.LENGTH_SHORT).show()
@@ -170,7 +170,7 @@ class RegularService : Fragment() {
             total += subtotal
         }
 
-        totalTextView.text = "Total: ₱$total"
+        totalTextView.text = "Total: ₱${String.format("%.2f", total)}"
     }
 
     private fun addToOrder() {

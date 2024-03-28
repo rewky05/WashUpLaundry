@@ -66,14 +66,14 @@ class CombinedOrderDataAdapter(
                 regularServiceHolder.name.text = item.name
                 regularServiceHolder.price.text = "₱${item.price}"
                 regularServiceHolder.kilo.text = "${item.kilo}"
-                regularServiceHolder.subtotal.text = "₱${item.subtotal}"
+                regularServiceHolder.subtotal.text = "₱${String.format("%.2f", item.subtotal)}"
             }
             TYPE_SELF_SERVICE -> {
                 val selfServiceHolder = holder as SelfServiceViewHolder
                 selfServiceHolder.name.text = item.name
                 selfServiceHolder.price.text = "₱${item.price}"
                 selfServiceHolder.loadOrPcs.text = "${item.loadOrPcs}"
-                selfServiceHolder.subtotal.text = "₱${item.subtotal}"
+                selfServiceHolder.subtotal.text = "₱${String.format("%.2f", item.subtotal)}"
             }
             TYPE_DRYCLEAN_SERVICE -> {
                 val dryCleanViewHolder = holder as DryCleanViewHolder
