@@ -8,7 +8,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
-class ReceiptAdapter(private val receiptData: List<ReceiptDataRow>) :
+class ReceiptAdapter(var receiptData: List<ReceiptDataRow>) :
     RecyclerView.Adapter<ReceiptAdapter.ReceiptViewHolder>() {
 
     class ReceiptViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

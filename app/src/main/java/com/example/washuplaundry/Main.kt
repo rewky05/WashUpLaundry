@@ -30,8 +30,13 @@ class Main : Fragment() {
         val bottomNavigation: BottomNavigationView = view.findViewById(R.id.bottom_navigation)
         bottomNavigation.setOnItemSelectedListener { item ->
             when (item.itemId) {
-                R.id.navigation_receipts -> {
-                    replaceFragment(Receipts())
+                R.id.navigation_history -> {
+                    replaceFragment(History())
+                    true
+                }
+
+                R.id.navigation_unpaid -> {
+                    replaceFragment(Unpaid())
                     true
                 }
 
@@ -40,10 +45,16 @@ class Main : Fragment() {
                     true
                 }
 
+                R.id.navigation_receipts -> {
+                    replaceFragment(Receipts())
+                    true
+                }
+
                 R.id.navigation_settings -> {
                     replaceFragment(Settings())
                     true
                 }
+
 
                 else -> false
             }

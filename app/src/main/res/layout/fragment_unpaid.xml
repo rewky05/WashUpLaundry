@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Receipts">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="36dp"
+        android:background="@color/red">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="10dp"
+            android:background="@drawable/rounded_frame_layout"
+            android:layout_marginBottom="52dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/date"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="16dp"
+                android:textColor="@color/black"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:visibility="gone"/>
+
+            <EditText
+                android:id="@+id/unpaid_search"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="20dp"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/unpaid_recycler_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="16dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</FrameLayout>

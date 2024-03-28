@@ -1,12 +1,20 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/navigation_receipts"
-        android:icon="@drawable/ic_receipts"
-        android:title="@string/receipts" />
+        android:id="@+id/navigation_history"
+        android:icon="@drawable/ic_history"
+        android:title="@string/history" />
+    <item
+        android:id="@+id/navigation_unpaid"
+        android:icon="@drawable/ic_unpaid"
+        android:title="@string/unpaid" />
     <item
         android:id="@+id/navigation_sales"
         android:icon="@drawable/ic_sales"
         android:title="@string/sales" />
+    <item
+        android:id="@+id/navigation_receipts"
+        android:icon="@drawable/ic_receipts"
+        android:title="@string/receipts" />
     <item
         android:id="@+id/navigation_settings"
         android:icon="@drawable/ic_settings"
