@@ -1,59 +1,201 @@
 package com.example.washuplaundry
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
+import android.text.Editable
+import android.text.TextWatcher
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
+import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
+import java.text.SimpleDateFormat
+import java.util.Date
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
-
-/**
- * A simple [Fragment] subclass.
- * Use the [History.newInstance] factory method to
- * create an instance of this fragment.
- */
 class History : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
-    }
+    private lateinit var receiptRecyclerView: RecyclerView
+    private val database = FirebaseDatabase.getInstance().reference
+    private lateinit var adapterData: MutableList<HistoryDataRow> // Make this accessible
+    private val receiptDataByDate: MutableMap<Date, MutableList<HistoryDataRow>> = mutableMapOf()
+    private lateinit var dateString: String
+    private lateinit var db: DatabaseReference
+    private lateinit var serviceListener: ValueEventListener
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_history, container, false)
-    }
+        val view = inflater.inflate(R.layout.fragment_history, container, false)
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment History.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            History().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
+        receiptRecyclerView = view.findViewById(R.id.unpaid_recycler_view)
+        adapterData = mutableListOf()
+        db = FirebaseDatabase.getInstance().getReference("Receipts/Paid")
+
+        serviceListener = db.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                if (snapshot.exists()) {
+                    for (dateSnapshot in snapshot.children) {
+                        dateString = dateSnapshot.key ?: continue
+                        Log.d("dateString", "$dateString")
+                    }
+                } else {
+                    Log.e("RegularService", "Failed to get regular services")
                 }
             }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.e("RegularService", "Failed to read from database", error.toException())
+            }
+        })
+
+        dateString = ""
+
+        fetchDataFromFirebase()
+
+        return view
+    }
+
+    private fun fetchDataFromFirebase() {
+        db.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                adapterData.clear() // Clear data before updating
+                adapterData.addAll(processAndPrepareData(snapshot)) // Populate adapterData
+
+                receiptRecyclerView.layoutManager = LinearLayoutManager(context)
+                receiptRecyclerView.adapter = HistoryAdapter(adapterData)
+
+                val searchEditText = view?.findViewById<EditText>(R.id.unpaid_search)
+                searchEditText?.addTextChangedListener(object : TextWatcher {
+                    override fun onTextChanged(searchQuery: CharSequence?, start: Int, before: Int, count: Int) {
+                        filterAndDisplayResults(searchQuery.toString())
+                    }
+                    override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+                    }
+                    override fun afterTextChanged(s: Editable?) {
+                    }
+                })
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.e("Firebase Error", "Error fetching data", error.toException())
+            }
+        })
+    }
+
+    private fun processAndPrepareData(snapshot: DataSnapshot): List<HistoryDataRow> {
+        val adapterData = mutableListOf<HistoryDataRow>()
+        Log.d("adapterData", "$adapterData")
+        receiptDataByDate.clear()
+
+        for (dateSnapshot in snapshot.children) {
+            val dateString = dateSnapshot.key ?: continue
+            val receiptDate = SimpleDateFormat("yyyy-MM-dd").parse(dateString) ?: continue
+
+            receiptDataByDate.getOrPut(receiptDate) { mutableListOf<HistoryDataRow>() }.let { dateReceipts ->
+
+                if (receiptDate != null) {
+                    for (joDataSnapshot in dateSnapshot.children) {
+                        val joNumber = joDataSnapshot.key ?: continue
+                        val timestamp = joDataSnapshot.child("time").value as? String ?: ""
+
+                        val totalPriceNode = joDataSnapshot.child("total")
+                        val totalPriceString = totalPriceNode.value.toString()
+                        val totalPrice = totalPriceString.toDoubleOrNull() ?: 0.0
+
+                        val totalDataArray = joDataSnapshot.child("totalData").children
+                        val orderItems = mutableListOf<OrderData>()
+                        val selfServiceOrderItems = mutableListOf<SelfServiceOrderData>()
+                        val dryCleanOrderItems = mutableListOf<DryCleanOrderData>()
+
+                        for (itemSnapshot in totalDataArray) {
+                            val orderType = itemSnapshot.child("orderType").value as? String
+
+                            if (orderType == "regular") {
+                                val orderItem = itemSnapshot.getValue(OrderData::class.java)
+                                if (orderItem != null) {
+                                    orderItems.add(orderItem)
+                                }
+                            } else if (orderType == "selfService") {
+                                val serviceItem =
+                                    itemSnapshot.getValue(SelfServiceOrderData::class.java)
+                                if (serviceItem != null) {
+                                    selfServiceOrderItems.add(serviceItem)
+                                }
+                            } else if (orderType == "dryClean") {
+                                val dryServiceItem =
+                                    itemSnapshot.getValue(DryCleanOrderData::class.java)
+                                if (dryServiceItem != null) {
+                                    dryCleanOrderItems.add(dryServiceItem)
+                                }
+                            }
+                        }
+
+                        val joData = JONumberData(
+                            joNumber = joNumber,
+                            timestamp = timestamp,
+                            details = OrderDetails(
+                                totalPrice = totalPrice,
+                                orderItems = listOf(
+                                    OrderItemsData(
+                                        orderData = orderItems,
+                                        selfServiceOrderData = selfServiceOrderItems,
+                                        dryCleanOrderData = dryCleanOrderItems
+                                    )
+                                )
+                            )
+                        )
+
+                        val receiptDataRow = createReceiptDataRow(dateString, joData)
+                        adapterData.add(receiptDataRow)
+
+                        dateReceipts.add(receiptDataRow)
+                    }
+                }
+            }
+        }
+
+        return receiptDataByDate.values.flatten()
+    }
+
+    private fun createReceiptDataRow(dateString: String, joData: JONumberData): HistoryDataRow {
+        val formattedTime = joData.timestamp
+        val orderDetails = joData.details
+        val orderTotalPrice = orderDetails.totalPrice
+
+        return HistoryDataRow(
+            date = dateString,
+            joNumber = joData.joNumber,
+            timestamp = formattedTime,
+            orderItems = orderDetails.orderItems,
+            totalPrice = orderTotalPrice,
+            isExpanded = false
+        )
+    }
+
+    private fun filterAndDisplayResults(searchQuery: String) {
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd")
+        val filteredData = receiptDataByDate.entries.flatMap { (date, receiptList) ->
+            receiptList.asSequence().filter { receiptDataRow ->
+                val dateMatch = dateFormat.format(date).contains(searchQuery, ignoreCase = true)
+                receiptDataRow.joNumber.contains(searchQuery, ignoreCase = true) || dateMatch
+            }.toList()
+        }
+        receiptRecyclerView.adapter?.updateList(filteredData)
+    }
+
+    private fun RecyclerView.Adapter<*>.updateList(newList: List<HistoryDataRow>) {
+        (this as HistoryAdapter).apply {
+            historyData = newList
+            notifyDataSetChanged()
+        }
     }
 }

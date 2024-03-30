@@ -9,7 +9,9 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:padding="36dp"
+        android:paddingHorizontal="36dp"
+        android:paddingBottom="36dp"
+        android:paddingTop="16dp"
         android:background="@color/red">
 
         <LinearLayout
@@ -19,6 +21,16 @@
             android:background="@drawable/rounded_frame_layout"
             android:layout_marginBottom="52dp"
             android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="16dp"
+                android:text="Today's Receipts"
+                android:textColor="@color/black"
+                android:textSize="24sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/current_date"
@@ -33,7 +45,7 @@
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/receipt_recycler_view"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:padding="16dp" />
 
         </LinearLayout>

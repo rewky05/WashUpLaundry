@@ -109,6 +109,8 @@ class Sales : Fragment() {
 
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
+        val defaultPosition = categories.indexOf("Regular")
+        spinner.setSelection(defaultPosition)
     }
 
     private fun handleFragment(tag: String, createFragment: () -> Fragment) {

@@ -24,7 +24,7 @@
             android:textSize="16sp"
             android:gravity="center"
             android:imeOptions="actionDone"
-            android:hint="Service" />
+            android:hint="item" />
 
         <EditText
             android:id="@+id/pcs"
@@ -36,7 +36,6 @@
             android:inputType="numberDecimal"
             android:imeOptions="actionDone"
             android:hint="pcs"
-            android:text="@string/kilo"
             android:textSize="16sp"/>
 
         <EditText
@@ -50,7 +49,7 @@
             android:gravity="center"
             android:inputType="numberDecimal"
             android:imeOptions="actionDone"
-            android:hint="Price" />
+            android:hint="price" />
 
         <ImageButton
             android:id="@+id/button_check"

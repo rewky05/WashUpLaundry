@@ -40,7 +40,7 @@ class Receipts : Fragment() {
     }
 
     private fun fetchDataFromFirebase() {
-        val receiptRef = database.child("Receipts/Unpaid")
+        val receiptRef = database.child("Receipts/Paid")
 
         receiptRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {

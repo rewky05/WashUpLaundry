@@ -10,7 +10,9 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:padding="48dp"
+        android:paddingHorizontal="36dp"
+        android:paddingBottom="36dp"
+        android:paddingTop="16dp"
         android:background="@color/red">
 
     <com.google.android.material.button.MaterialButton

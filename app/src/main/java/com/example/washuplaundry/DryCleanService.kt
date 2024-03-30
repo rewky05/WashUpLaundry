@@ -85,13 +85,13 @@ class DryCleanService : Fragment() {
 
         for ((serviceName, price) in servicePriceMap) {
             val serviceView = layoutInflater.inflate(R.layout.dry_clean_item, servicesContainer, false)
-            val serviceNameEditable = Editable.Factory.getInstance().newEditable(serviceName)
-            serviceView.findViewById<EditText>(R.id.service_name).text = serviceNameEditable
-            val servicePriceEditable = Editable.Factory.getInstance().newEditable(price.toString())
-            serviceView.findViewById<EditText>(R.id.service_price).text = servicePriceEditable
+//            val serviceNameEditable = Editable.Factory.getInstance().newEditable(serviceName)
+//            serviceView.findViewById<EditText>(R.id.service_name).text = serviceNameEditable
+//            val servicePriceEditable = Editable.Factory.getInstance().newEditable(price.toString())
+//            serviceView.findViewById<EditText>(R.id.service_price).text = servicePriceEditable
 
-            val pcs = serviceView.findViewById<EditText>(R.id.pcs)
-            pcs.setText("0")
+//            val pcs = serviceView.findViewById<EditText>(R.id.pcs)
+//            pcs.setText("0")
 
             val buttonCheck = serviceView.findViewById<ImageButton>(R.id.button_check)
             buttonCheck.setOnClickListener { handleButtonClick(serviceView) }
@@ -220,9 +220,9 @@ class DryCleanService : Fragment() {
             val priceInput = serviceView.findViewById<EditText>(R.id.service_price)
             val buttonCheck = serviceView.findViewById<ImageButton>(R.id.button_check)
 
-            pcsInput.setText("0")
+            pcsInput.setText("")
             nameInput.setText("")
-            priceInput.setText("0.0")
+            priceInput.setText("")
 
             pcsInput.isEnabled = true
             nameInput.isEnabled = true

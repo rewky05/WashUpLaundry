@@ -8,11 +8,14 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.ImageButton
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.button.MaterialButton
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import java.text.SimpleDateFormat
@@ -22,8 +25,11 @@ class Unpaid : Fragment() {
 
     private lateinit var receiptRecyclerView: RecyclerView
     private val database = FirebaseDatabase.getInstance().reference
-    private lateinit var adapterData: MutableList<ReceiptDataRow> // Make this accessible
-    private val receiptDataByDate: MutableMap<Date, MutableList<ReceiptDataRow>> = mutableMapOf()
+    private lateinit var adapterData: MutableList<HistoryDataRow>
+    private val receiptDataByDate: MutableMap<Date, MutableList<HistoryDataRow>> = mutableMapOf()
+    private lateinit var dateString: String
+    private lateinit var db: DatabaseReference
+    private lateinit var serviceListener: ValueEventListener
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -33,7 +39,30 @@ class Unpaid : Fragment() {
         val view = inflater.inflate(R.layout.fragment_unpaid, container, false)
 
         receiptRecyclerView = view.findViewById(R.id.unpaid_recycler_view)
-        adapterData = mutableListOf() // Initialize adapterData
+        adapterData = mutableListOf()
+        db = FirebaseDatabase.getInstance().getReference("Receipts/Unpaid")
+
+        serviceListener = db.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                if (snapshot.exists()) {
+                    for (dateSnapshot in snapshot.children) {
+                        dateString = dateSnapshot.key ?: continue
+                        Log.d("dateString", "$dateString")
+                    }
+                } else {
+                    Log.e("RegularService", "Failed to get regular services")
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.e("RegularService", "Failed to read from database", error.toException())
+            }
+        })
+
+        val receiptRowView = inflater.inflate(R.layout.receipt_row, container, false)
+        val btnCollect = receiptRowView.findViewById<MaterialButton>(R.id.btnCollect)
+
+        btnCollect.visibility = View.VISIBLE
 
         fetchDataFromFirebase()
 
@@ -49,9 +78,8 @@ class Unpaid : Fragment() {
                 adapterData.addAll(processAndPrepareData(snapshot)) // Populate adapterData
 
                 receiptRecyclerView.layoutManager = LinearLayoutManager(context)
-                receiptRecyclerView.adapter = ReceiptAdapter(adapterData)
+                receiptRecyclerView.adapter = UnpaidAdapter(adapterData)
 
-                // Search setup
                 val searchEditText = view?.findViewById<EditText>(R.id.unpaid_search)
                 searchEditText?.addTextChangedListener(object : TextWatcher {
                     override fun onTextChanged(searchQuery: CharSequence?, start: Int, before: Int, count: Int) {
@@ -70,8 +98,8 @@ class Unpaid : Fragment() {
         })
     }
 
-    private fun processAndPrepareData(snapshot: DataSnapshot): List<ReceiptDataRow> {
-        val adapterData = mutableListOf<ReceiptDataRow>()
+    private fun processAndPrepareData(snapshot: DataSnapshot): List<HistoryDataRow> {
+        val adapterData = mutableListOf<HistoryDataRow>()
         Log.d("adapterData", "$adapterData")
         receiptDataByDate.clear()
 
@@ -79,8 +107,7 @@ class Unpaid : Fragment() {
             val dateString = dateSnapshot.key ?: continue
             val receiptDate = SimpleDateFormat("yyyy-MM-dd").parse(dateString) ?: continue
 
-            // Create a new list if it's the first time encountering a date, otherwise use existing list
-            receiptDataByDate.getOrPut(receiptDate) { mutableListOf<ReceiptDataRow>() }.let { dateReceipts ->
+            receiptDataByDate.getOrPut(receiptDate) { mutableListOf<HistoryDataRow>() }.let { dateReceipts ->
 
                 if (receiptDate != null) {
                     for (joDataSnapshot in dateSnapshot.children) {
@@ -134,7 +161,7 @@ class Unpaid : Fragment() {
                             )
                         )
 
-                        val receiptDataRow = createReceiptDataRow(joData)
+                        val receiptDataRow = createReceiptDataRow(dateString, joData)
                         adapterData.add(receiptDataRow)
 
                         dateReceipts.add(receiptDataRow)
@@ -146,12 +173,13 @@ class Unpaid : Fragment() {
         return receiptDataByDate.values.flatten()
     }
 
-    private fun createReceiptDataRow(joData: JONumberData): ReceiptDataRow {
+    private fun createReceiptDataRow(dateString: String, joData: JONumberData): HistoryDataRow {
         val formattedTime = joData.timestamp
         val orderDetails = joData.details
         val orderTotalPrice = orderDetails.totalPrice
 
-        return ReceiptDataRow(
+        return HistoryDataRow(
+            date = dateString,
             joNumber = joData.joNumber,
             timestamp = formattedTime,
             orderItems = orderDetails.orderItems,
@@ -164,16 +192,16 @@ class Unpaid : Fragment() {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd")
         val filteredData = receiptDataByDate.entries.flatMap { (date, receiptList) ->
             receiptList.asSequence().filter { receiptDataRow ->
-            val dateMatch = dateFormat.format(date).contains(searchQuery, ignoreCase = true)
+                val dateMatch = dateFormat.format(date).contains(searchQuery, ignoreCase = true)
                 receiptDataRow.joNumber.contains(searchQuery, ignoreCase = true) || dateMatch
             }.toList()
-    }
+        }
         receiptRecyclerView.adapter?.updateList(filteredData)
     }
 
-    private fun RecyclerView.Adapter<*>.updateList(newList: List<ReceiptDataRow>) {
-        (this as ReceiptAdapter).apply {
-            receiptData = newList
+    private fun RecyclerView.Adapter<*>.updateList(newList: List<HistoryDataRow>) {
+        (this as UnpaidAdapter).apply {
+            historyData = newList
             notifyDataSetChanged()
         }
     }

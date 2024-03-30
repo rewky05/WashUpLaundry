@@ -33,7 +33,7 @@ class TotalPreview : Fragment() {
     private lateinit var totalPriceTextView: TextView
 
     private val joNumberRef = Firebase.database.getReference("currentJONumber")
-    private val databaseRef = Firebase.database.getReference("Receipts/Unpaid")
+    private val databaseRef = Firebase.database.getReference("Receipts")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -126,6 +126,61 @@ class TotalPreview : Fragment() {
             }
         }
 
+        val btnChargeNow = view.findViewById<MaterialButton>(R.id.btnChargeNow)
+        btnChargeNow.setOnClickListener {
+            val userId = FirebaseAuth.getInstance().currentUser?.uid
+
+            if (userId != null) {
+                fetchUserNameAndSaveOrder(userId) { userName, userId ->
+                    val orderItemsData = collectOrderItemsFromUI()
+
+                    joNumberRef.runTransaction(object : Transaction.Handler {
+                        override fun doTransaction(currentData: MutableData): Transaction.Result {
+                            var joNumber = currentData.getValue(Int::class.java) ?: 80
+                            joNumber++
+                            currentData.value = joNumber
+                            return Transaction.success(currentData)
+                        }
+
+                        override fun onComplete(
+                            error: DatabaseError?,
+                            committed: Boolean,
+                            snapshot: DataSnapshot?
+                        ) {
+                            if (committed) {
+                                val newJONumber = snapshot?.getValue(Int::class.java) ?: 80
+
+                                val totalPrice =
+                                    orderItemsData.orderData.sumOf { it.subtotal } +
+                                            orderItemsData.selfServiceOrderData.sumOf { it.subtotal } +
+                                            orderItemsData.dryCleanOrderData.sumOf { it.subtotal }
+
+                                Log.d("totalPrice in preview", "$totalPrice")
+
+                                if (totalPrice > 0.0) {
+
+                                    fetchUserName(userId) { userName ->
+                                        saveOrderDataToRealtimePaid(
+                                            orderItemsData.orderData,
+                                            orderItemsData.selfServiceOrderData,
+                                            orderItemsData.dryCleanOrderData,
+                                            newJONumber,
+                                            userName,
+                                            totalPrice
+                                        )
+                                    }
+                                    combinedAdapter.clearLists()
+                                    orderViewModel.resetTotalPrice()
+                                } else {
+                                    Toast.makeText(context, "There are no added orders yet", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                    })
+                }
+            }
+        }
+
         return view
     }
 
@@ -178,6 +233,79 @@ class TotalPreview : Fragment() {
             }
     }
 
+    private fun saveOrderDataToRealtimePaid(
+        orderData: List<OrderData>,
+        selfServiceOrderData: List<SelfServiceOrderData>,
+        dryServiceOrderData: List<DryCleanOrderData>,
+        newJONumber: Int,
+        userName: String,
+        totalPrice: Double
+    ) {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid
+
+        if (userId != null) {
+            val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+            val currentTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+            val databaseRef = databaseRef.child("Paid").child(currentDate).child("JO-$newJONumber")
+
+            val totalDataList = mutableListOf<Any>()
+
+            orderData.forEach { order ->
+                val orderMap = mapOf(
+                    "name" to order.itemName,
+                    "price" to order.itemPrice,
+                    "kilo" to order.kilo,
+                    "subtotal" to order.itemSubtotal,
+                    "userName" to userName,
+                    "userId" to userId,
+                    "orderType" to "regular"
+                )
+                totalDataList.add(orderMap)
+            }
+
+            // Add self-service order data to totalDataList
+            selfServiceOrderData.forEach { selfServiceOrder ->
+                val selfServiceMap = mapOf(
+                    "name" to selfServiceOrder.itemName,
+                    "price" to selfServiceOrder.itemPrice,
+                    "loadOrPcs" to selfServiceOrder.loadOrPcs,
+                    "subtotal" to selfServiceOrder.itemSubtotal,
+                    "userName" to userName,
+                    "userId" to userId,
+                    "orderType" to "selfService"
+                )
+                totalDataList.add(selfServiceMap)
+            }
+
+            dryServiceOrderData.forEach { dryServiceOrder ->
+                val dryServiceMap = mapOf(
+                    "name" to dryServiceOrder.itemName,
+                    "price" to dryServiceOrder.itemPrice,
+                    "pcs" to dryServiceOrder.pcs,
+                    "subtotal" to dryServiceOrder.itemSubtotal,
+                    "userName" to userName,
+                    "userId" to userId,
+                    "orderType" to "dryClean"
+                )
+                totalDataList.add(dryServiceMap)
+            }
+
+            val data = mapOf(
+                "time" to currentTime,
+                "total" to totalPrice.toString(),
+                "totalData" to totalDataList
+            )
+
+            databaseRef.setValue(data)
+                .addOnSuccessListener {
+                    Log.d("Receipt saved", "Receipt saved!!!")
+                }
+                .addOnFailureListener { exception ->
+                    Log.e("Firebase Save Error", "Error saving data", exception)
+                }
+        }
+    }
+
     private fun saveOrderDataToRealtime(
         orderData: List<OrderData>,
         selfServiceOrderData: List<SelfServiceOrderData>,
@@ -191,7 +319,7 @@ class TotalPreview : Fragment() {
         if (userId != null) {
             val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
             val currentTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
-            val databaseRef = databaseRef.child(currentDate).child("JO-$newJONumber")
+            val databaseRef = databaseRef.child("Unpaid").child(currentDate).child("JO-$newJONumber")
 
             val totalDataList = mutableListOf<Any>()
 

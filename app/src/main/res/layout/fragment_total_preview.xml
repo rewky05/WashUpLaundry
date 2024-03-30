@@ -3,17 +3,56 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingBottom="48dp"
     android:paddingHorizontal="36dp"
+    android:paddingBottom="36dp"
+    android:paddingTop="16dp"
     tools:context=".TotalPreview">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginBottom="40dp"
+        android:layout_marginBottom="52dp"
         android:background="@drawable/rounded_frame_layout"
         android:orientation="vertical"
         android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:paddingHorizontal="16dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCharge"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:backgroundTint="@color/yellow"
+                android:text="PAY LATER"
+                android:textColor="@color/black"
+                android:textSize="14sp"
+                android:padding="10dp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="10dp"
+                android:layout_height="wrap_content" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnChargeNow"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:backgroundTint="@color/yellow"
+                android:text="PAY NOW"
+                android:textColor="@color/black"
+                android:textSize="14sp"
+                android:padding="10dp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -30,17 +69,6 @@
                 android:paddingTop="16dp"
                 android:textColor="@color/black"
                 android:textSize="18sp"
-                android:textStyle="bold" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnCharge"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginHorizontal="16dp"
-                android:backgroundTint="@color/yellow"
-                android:text="CHARGE"
-                android:textColor="@color/black"
                 android:textStyle="bold" />
 
         </LinearLayout>

@@ -3,18 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingHorizontal="16dp"
-    android:paddingBottom="16dp">
-
-    <TextView
-        android:id="@+id/date"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="-15dp"
-        android:textSize="16sp"
-        android:textColor="@color/black"
-        android:textStyle="bold"
-        android:visibility="gone" />
+    android:paddingHorizontal="16dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -33,25 +22,11 @@
             android:textSize="16sp"
             android:textStyle="bold" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnCollect"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:backgroundTint="@color/yellow"
-            android:text="COLLECT"
-            android:textColor="@color/black"
-            android:textSize="14sp"
-            android:padding="10dp"
-            android:textStyle="bold"
-            android:visibility="invisible"/>
-
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="-15dp"
         android:paddingBottom="8dp"
         android:orientation="horizontal">
 

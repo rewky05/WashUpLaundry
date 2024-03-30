@@ -76,7 +76,6 @@ class Main : Fragment() {
         requireActivity().findViewById<MaterialButton>(R.id.btnClearPreview).setOnClickListener {
             orderViewModel.resetTotalPrice()
         }
-
     }
 
     private fun replaceFragment(fragment: Fragment) {

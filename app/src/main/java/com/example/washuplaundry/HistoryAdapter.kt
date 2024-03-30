@@ -8,10 +8,11 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
-class ReceiptAdapter(var receiptData: List<ReceiptDataRow>) :
-    RecyclerView.Adapter<ReceiptAdapter.ReceiptViewHolder>() {
+class HistoryAdapter(var historyData: List<HistoryDataRow>) :
+    RecyclerView.Adapter<HistoryAdapter.ReceiptViewHolder>() {
 
     class ReceiptViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val date: TextView = itemView.findViewById(R.id.date)
         val joNumberTextView: TextView = itemView.findViewById(R.id.jo_number)
         val timeTextView: TextView = itemView.findViewById(R.id.time)
         val totalPriceTextView: TextView = itemView.findViewById(R.id.total_price)
@@ -21,12 +22,14 @@ class ReceiptAdapter(var receiptData: List<ReceiptDataRow>) :
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ReceiptViewHolder {
         val layoutInflater = LayoutInflater.from(parent.context)
-        val view = layoutInflater.inflate(R.layout.receipt_row_today, parent, false)
+        val view = layoutInflater.inflate(R.layout.receipt_row, parent, false)
         return ReceiptViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: ReceiptViewHolder, position: Int) {
-        val row = receiptData[position]
+        val row = historyData[position]
+        holder.date.visibility = View.VISIBLE
+        holder.date.text = row.date
         holder.joNumberTextView.text = row.joNumber
         holder.timeTextView.text = "Time: ${row.timestamp}"
         holder.totalPriceTextView.text = "₱${row.totalPrice}"
@@ -79,6 +82,6 @@ class ReceiptAdapter(var receiptData: List<ReceiptDataRow>) :
     }
 
     override fun getItemCount(): Int {
-        return receiptData.size
+        return historyData.size
     }
 }
