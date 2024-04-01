@@ -27,7 +27,7 @@
                 android:layout_height="wrap_content"
                 android:paddingHorizontal="16dp"
                 android:paddingTop="16dp"
-                android:text="Receipts History"
+                android:text="Sales History"
                 android:textColor="@color/black"
                 android:textSize="24sp"
                 android:textStyle="bold" />
@@ -47,10 +47,38 @@
                 android:layout_marginTop="-8dp"
                 android:background="@drawable/normal_line" />
 
+            <TextView
+                android:id="@+id/paid"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="16dp"
+                android:textColor="@color/black"
+                android:text="Paid"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/unpaid_recycler_view"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="200dp"
+                android:padding="16dp" />
+
+            <TextView
+                android:id="@+id/unpaid"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="16dp"
+                android:textColor="@color/black"
+                android:text="Unpaid"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/collection_recycler_view"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
                 android:padding="16dp" />
 
         </LinearLayout>
