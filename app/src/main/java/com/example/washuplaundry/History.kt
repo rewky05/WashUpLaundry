@@ -250,54 +250,6 @@ class History : Fragment() {
         )
     }
 
-//    private fun filterAndDisplayResults(searchQuery: String) {
-//        val dateFormat = SimpleDateFormat("yyyy-MM-dd")
-//
-//        val filteredPaidData = adapterData.flatMap { receiptDataRow ->
-//            val date = receiptDataRow.date
-//            if (date != null) {
-//                try {
-//                    val formattedDate = dateFormat.format(date)
-//                    if (formattedDate.contains(searchQuery, ignoreCase = true) || receiptDataRow.joNumber.contains(searchQuery, ignoreCase = true)) {
-//                        listOf(receiptDataRow)
-//                    } else {
-//                        emptyList()
-//                    }
-//                } catch (e: Exception) {
-//                    Log.e("Filtering Error", "Error formatting date: $date", e)
-//                    emptyList()
-//                }
-//            } else {
-//                Log.e("Filtering Error", "Invalid date object found: $date")
-//                emptyList()
-//            }
-//        }
-//
-//        val filteredUnpaidData = collectedAdapterData.flatMap { receiptDataRow ->
-//            val date = receiptDataRow.date
-//            if (date != null) {
-//                try {
-//                    val formattedDate = dateFormat.format(date)
-//                    if (formattedDate.contains(searchQuery, ignoreCase = true) || receiptDataRow.joNumber.contains(searchQuery, ignoreCase = true)) {
-//                        listOf(receiptDataRow)
-//                    } else {
-//                        emptyList()
-//                    }
-//                } catch (e: Exception) {
-//                    Log.e("Filtering Error", "Error formatting date: $date", e)
-//                    emptyList()
-//                }
-//            } else {
-//                Log.e("Filtering Error", "Invalid date object found: $date")
-//                emptyList()
-//            }
-//        }
-//
-//        receiptRecyclerView.adapter?.updateList(filteredPaidData)
-//        collectionRecyclerView.adapter?.updateList(filteredUnpaidData)
-//    }
-
-
     private fun filterAndDisplayResults(searchQuery: String) {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd")
         val filteredData = receiptDataByDate.entries.flatMap { (date, receiptList) ->
